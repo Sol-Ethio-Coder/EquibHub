@@ -28,11 +28,6 @@ A complete web application for managing a 6-member EQUIB (rotating savings) grou
 - IndexedDB (Local Storage)
 - Chart.js
 
-## Default Admin Credentials
-
-- Email: admin@equibhub.com
-- Password: Admin123!
-
 ## Developer
 
 **Sol Ethio Coder**
