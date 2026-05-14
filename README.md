@@ -18,7 +18,6 @@ A complete web application for managing a 6-member EQUIB (rotating savings) grou
 1. Clone the repository
 2. Open `index.html` in your browser
 3. First user becomes admin automatically
-4. Or use default admin: `admin@equibhub.com` / `Admin123!`
 
 ## Tech Stack
 
