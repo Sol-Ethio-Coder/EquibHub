@@ -5,28 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
     <meta name="description" content="EquibHub - Secure Workplace Savings Circle with Payment Verification">
-    <meta name="keywords" content="equib, savings circle, workplace savings, rotating savings, payment verification">
-    <meta name="author" content="EquibHub">
-    <meta name="format-detection" content="telephone=no">
-    
     <title>EquibHub | Workplace Savings</title>
     
-    <!-- Amazing Favicon Set -->
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%233b82f6'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23g)' stroke='white' stroke-width='2'/><text x='50' y='67' text-anchor='middle' font-size='44' fill='white' font-weight='bold'>💰</text></svg>">
     <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%233b82f6'/><text x='50' y='67' text-anchor='middle' font-size='44' fill='white'>💰</text></svg>">
     
     <link rel="stylesheet" href="/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <style>
-        /* Additional animated favicon style for supported browsers */
-        @keyframes faviconPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-    </style>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
 </head>
 <body>
     <div class="animated-bg">
@@ -34,13 +23,13 @@
         <div class="particle p2"></div>
         <div class="particle p3"></div>
         <div class="particle p4"></div>
+        <div class="particle p5"></div>
+        <div class="particle p6"></div>
     </div>
 
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="spinner"></div>
         <p>Loading EquibHub...</p>
-        <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.5rem;">Secure savings circle</p>
     </div>
 
     <div class="app-container" id="appContainer">
@@ -60,22 +49,12 @@
 
         <!-- Main Dashboard -->
         <div id="dashboard" class="dashboard">
-            <!-- Mobile Menu Header -->
             <div class="mobile-menu-header">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="mobile-logo">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    <span>EquibHub</span>
-                </div>
+                <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+                <div class="mobile-logo"><i class="fas fa-hand-holding-usd"></i><span>EquibHub</span></div>
                 <div class="mobile-actions">
-                    <button class="theme-toggle-mobile" id="mobileThemeToggle">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="logout-mobile" id="logoutMobileBtn">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+                    <button class="theme-toggle-mobile" id="mobileThemeToggle"><i class="fas fa-moon"></i></button>
+                    <button class="logout-mobile" id="logoutMobileBtn"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
             </div>
 
@@ -85,250 +64,201 @@
                     <div class="sidebar-header">
                         <i class="fas fa-hand-holding-usd"></i>
                         <h3>EquibHub</h3>
-                        <button class="theme-toggle" id="themeToggle">
-                            <i class="fas fa-moon"></i>
-                        </button>
+                        <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
                     </div>
                     <nav class="sidebar-nav">
-                        <button class="nav-item active" data-view="overview">
-                            <i class="fas fa-chart-pie"></i>
-                            <span>Overview</span>
-                        </button>
-                        <button class="nav-item" data-view="members">
-                            <i class="fas fa-users"></i>
-                            <span>Members</span>
-                        </button>
-                        <button class="nav-item" data-view="contributions">
-                            <i class="fas fa-coins"></i>
-                            <span>Contributions</span>
-                        </button>
-                        <button class="nav-item" data-view="rounds">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Rounds</span>
-                        </button>
-                        <button class="nav-item" data-view="analytics">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Analytics</span>
-                        </button>
-                        <button class="nav-item" data-view="bankDetails">
-                            <i class="fas fa-university"></i>
-                            <span>Bank Details</span>
-                        </button>
-                        <button class="nav-item" data-view="security">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Security</span>
-                        </button>
+                        <button class="nav-item active" data-view="overview"><i class="fas fa-chart-pie"></i><span>Overview</span></button>
+                        <button class="nav-item" data-view="members"><i class="fas fa-users"></i><span>Members</span></button>
+                        <button class="nav-item" data-view="contributions"><i class="fas fa-coins"></i><span>Contributions</span></button>
+                        <button class="nav-item" data-view="rounds"><i class="fas fa-sync-alt"></i><span>Rounds</span></button>
+                        <button class="nav-item" data-view="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></button>
+                        <button class="nav-item" data-view="bankDetails"><i class="fas fa-university"></i><span>Bank Details</span></button>
+                        <button class="nav-item" data-view="paymentHistory"><i class="fas fa-history"></i><span>Payment History</span></button>
+                        <button class="nav-item" data-view="security"><i class="fas fa-shield-alt"></i><span>Security</span></button>
                     </nav>
                     <div class="sidebar-footer">
-                        <div class="session-timer" id="sessionTimer">
-                            <i class="fas fa-clock"></i>
-                            <span>Session expires in: <span id="timerCount">30:00</span></span>
-                        </div>
-                        <button class="logout-btn" id="logoutBtn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </button>
+                        <div class="session-timer"><i class="fas fa-clock"></i><span>Session: <span id="timerCount">30:00</span></span></div>
+                        <button class="btn-secondary sync-btn" onclick="manualSync()"><i class="fas fa-cloud-upload-alt"></i> Sync to Cloud</button>
+                        <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
                     </div>
                 </aside>
 
-                <!-- Main Content -->
                 <main class="main-content">
                     <!-- Overview View -->
                     <div id="overviewView" class="view-panel active">
                         <div class="welcome-banner">
                             <div class="welcome-text">
-                                <h2>Welcome back, <span id="userName">Member</span>!</h2>
-                                <p>Track your EquibHub savings journey securely</p>
+                                <h2>Welcome, <span id="userName">Member</span>!</h2>
+                                <p>Track your savings journey</p>
                             </div>
-                            <div class="round-indicator">
-                                <i class="fas fa-chart-simple"></i>
-                                <span>Round <span id="currentRound">1</span>/<span id="totalRounds">6</span></span>
-                            </div>
+                            <div class="round-indicator"><span>Round <span id="currentRound">1</span>/<span id="totalRounds">6</span></span></div>
                         </div>
 
-                        <!-- Progress Tracker -->
                         <div class="progress-tracker">
                             <h3><i class="fas fa-chart-line"></i> My EquibHub Journey</h3>
                             <div class="progress-bar-container">
                                 <div class="progress-label">Round Progress</div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="roundProgressFill" style="width: 0%"></div>
-                                </div>
+                                <div class="progress-bar"><div class="progress-fill" id="roundProgressFill"></div></div>
                                 <div class="progress-stats" id="progressStats">Round 1 of 6</div>
                             </div>
                             <div class="milestones" id="milestonesContainer"></div>
                         </div>
 
                         <div class="stats-grid">
-                            <div class="stat-card primary">
-                                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                                <div class="stat-info">
-                                    <span class="stat-label">My Balance</span>
-                                    <span class="stat-value" id="userBalance">$0</span>
-                                </div>
-                            </div>
-                            <div class="stat-card success">
-                                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
-                                <div class="stat-info">
-                                    <span class="stat-label">My Contributions</span>
-                                    <span class="stat-value" id="userContributions">0</span>
-                                </div>
-                            </div>
-                            <div class="stat-card info">
-                                <div class="stat-icon"><i class="fas fa-trophy"></i></div>
-                                <div class="stat-info">
-                                    <span class="stat-label">Next Payout</span>
-                                    <span class="stat-value" id="nextPayout">Round 2</span>
-                                </div>
-                            </div>
-                            <div class="stat-card warning">
-                                <div class="stat-icon"><i class="fas fa-users"></i></div>
-                                <div class="stat-info">
-                                    <span class="stat-label">Active Members</span>
-                                    <span class="stat-value" id="activeMembers">6/6</span>
-                                </div>
-                            </div>
+                            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-wallet"></i></div><div class="stat-info"><span class="stat-label">My Balance</span><span class="stat-value" id="userBalance">$0</span></div></div>
+                            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-info"><span class="stat-label">My Contributions</span><span class="stat-value" id="userContributions">0</span></div></div>
+                            <div class="stat-card info"><div class="stat-icon"><i class="fas fa-trophy"></i></div><div class="stat-info"><span class="stat-label">Next Payout</span><span class="stat-value" id="nextPayout">Round 2</span></div></div>
+                            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><span class="stat-label">Active Members</span><span class="stat-value" id="activeMembers">1/6</span></div></div>
                         </div>
 
                         <div class="action-cards">
-                            <button class="action-card contribute-btn" id="quickContribute">
-                                <i class="fas fa-plus-circle"></i>
-                                <div>
-                                    <h4>Contribute</h4>
-                                    <p>Add your monthly share (with payment proof)</p>
-                                </div>
-                            </button>
-                            <button class="action-card withdraw-btn" id="quickWithdraw">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <div>
-                                    <h4>Withdraw</h4>
-                                    <p>Claim your payout</p>
-                                </div>
-                            </button>
+                            <button class="action-card contribute-btn" id="quickContribute"><i class="fas fa-plus-circle"></i><div><h4>Contribute</h4><p>Add with payment proof</p></div></button>
+                            <button class="action-card withdraw-btn" id="quickWithdraw"><i class="fas fa-money-bill-wave"></i><div><h4>Withdraw</h4><p>Claim your payout</p></div></button>
                         </div>
 
-                        <!-- Contribution Reminder Card -->
                         <div id="reminderCard" class="reminder-card" style="display: none;">
                             <i class="fas fa-bell"></i>
-                            <div>
-                                <strong>Contribution Due!</strong>
-                                <p id="reminderText">Round is active. Please contribute with payment proof.</p>
-                            </div>
+                            <div><strong>Contribution Due!</strong><p id="reminderText">Round is active. Please contribute with payment proof.</p></div>
                             <button id="dismissReminder" class="btn-small">Dismiss</button>
                         </div>
 
-                        <div class="recent-activity">
-                            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
-                            <div id="recentTransactions" class="activity-list"></div>
-                        </div>
+                        <div class="recent-activity"><h3><i class="fas fa-clock"></i> Recent Activity</h3><div id="recentTransactions" class="activity-list"></div></div>
                     </div>
 
                     <!-- Members View -->
-                    <div id="membersView" class="view-panel">
-                        <h2><i class="fas fa-users"></i> Group Members</h2>
-                        <div class="members-grid" id="membersGrid"></div>
-                    </div>
-
+                    <div id="membersView" class="view-panel"><h2><i class="fas fa-users"></i> Group Members</h2><div class="members-grid" id="membersGrid"></div></div>
+                    
                     <!-- Contributions View -->
                     <div id="contributionsView" class="view-panel">
                         <h2><i class="fas fa-coins"></i> Contribution History with Payment Proofs</h2>
-                        <div class="export-bar">
-                            <button id="exportContributionsBtn" class="btn-secondary">
-                                <i class="fas fa-download"></i> Export to CSV
-                            </button>
-                        </div>
-                        <div class="contributions-table-container">
-                            <table class="contributions-table" id="contributionsTable">
-                                <thead>
-                                    <tr><th>Member</th><th>Amount</th><th>Date</th><th>Round</th><th>Payment Proof</th><th>Status</th></tr>
-                                </thead>
-                                <tbody id="contributionsTableBody"></tbody>
-                            </table>
-                        </div>
+                        <div class="export-bar"><button id="exportContributionsBtn" class="btn-secondary"><i class="fas fa-download"></i> Export to CSV</button></div>
+                        <div class="contributions-table-container"><table class="contributions-table" id="contributionsTable"><thead><tr><th>Member</th><th>Amount</th><th>Date</th><th>Round</th><th>Payment Proof</th><th>Status</th></tr></thead><tbody id="contributionsTableBody"></tbody></table></div>
                     </div>
 
-                    <!-- Rounds View -->
-                    <div id="roundsView" class="view-panel">
-                        <h2><i class="fas fa-sync-alt"></i> EquibHub Rounds</h2>
-                        <div class="rounds-timeline" id="roundsTimeline"></div>
-                    </div>
-
-                    <!-- Analytics View -->
-                    <div id="analyticsView" class="view-panel">
-                        <h2><i class="fas fa-chart-line"></i> Analytics</h2>
-                        <div class="chart-container">
-                            <canvas id="savingsChart"></canvas>
-                        </div>
-                        <div class="stats-summary" id="statsSummary"></div>
-                    </div>
-
-                    <!-- Bank Details View -->
+                    <div id="roundsView" class="view-panel"><h2><i class="fas fa-sync-alt"></i> EquibHub Rounds</h2><div class="rounds-timeline" id="roundsTimeline"></div></div>
+                    
+                    <div id="analyticsView" class="view-panel"><h2><i class="fas fa-chart-line"></i> Analytics</h2><div class="chart-container"><canvas id="savingsChart"></canvas></div><div class="stats-summary" id="statsSummary"></div></div>
+                    
                     <div id="bankDetailsView" class="view-panel">
                         <h2><i class="fas fa-university"></i> My Bank Account Details</h2>
-                        <div class="bank-details-form">
-                            <div class="bank-card">
-                                <div class="security-note">
-                                    <i class="fas fa-lock"></i>
-                                    <p>Your bank details are encrypted and only used for withdrawals</p>
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-user"></i> Account Holder Name</label>
-                                    <input type="text" id="bankAccountName" placeholder="Full name as per bank account" autocomplete="off">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-building"></i> Bank Name</label>
-                                    <input type="text" id="bankName" placeholder="e.g., Chase Bank, Bank of America" autocomplete="off">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-credit-card"></i> Account Number</label>
-                                    <input type="text" id="bankAccountNumber" placeholder="Your bank account number" autocomplete="off">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-code-branch"></i> Routing Number</label>
-                                    <input type="text" id="bankRoutingNumber" placeholder="Routing number" autocomplete="off">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-mobile-alt"></i> Mobile Money / UPI ID (Optional)</label>
-                                    <input type="text" id="mobileMoneyId" placeholder="e.g., 1234567890@paytm / 0712345678" autocomplete="off">
-                                </div>
-                                <button class="btn-primary" id="saveBankDetails">Save Bank Details</button>
-                                <div id="bankStatus" class="bank-status"></div>
-                            </div>
-                        </div>
+                        <div class="bank-details-form"><div class="bank-card">
+                            <div class="security-note"><i class="fas fa-lock"></i><p>Your bank details are encrypted and only used for withdrawals</p></div>
+                            <div class="form-group"><label><i class="fas fa-user"></i> Account Holder Name</label><input type="text" id="bankAccountName" placeholder="Full name as per bank account"></div>
+                            <div class="form-group"><label><i class="fas fa-building"></i> Bank Name</label><input type="text" id="bankName" placeholder="e.g., Chase Bank, Bank of America"></div>
+                            <div class="form-group"><label><i class="fas fa-credit-card"></i> Account Number</label><input type="text" id="bankAccountNumber" placeholder="Your bank account number"></div>
+                            <div class="form-group"><label><i class="fas fa-code-branch"></i> Routing Number</label><input type="text" id="bankRoutingNumber" placeholder="Routing number"></div>
+                            <div class="form-group"><label><i class="fas fa-mobile-alt"></i> Mobile Money / UPI ID (Optional)</label><input type="text" id="mobileMoneyId" placeholder="e.g., 1234567890@paytm / 0712345678"></div>
+                            <button class="btn-primary" id="saveBankDetails">Save Bank Details</button>
+                            <div id="bankStatus"></div>
+                        </div></div>
                     </div>
 
-                    <!-- Security View -->
                     <div id="securityView" class="view-panel">
                         <h2><i class="fas fa-shield-alt"></i> Security Settings</h2>
                         <div class="security-card">
-                            <div class="security-section">
-                                <h3>Change Password</h3>
-                                <div class="form-group">
-                                    <label>Current Password</label>
-                                    <input type="password" id="currentPassword" placeholder="Enter current password">
-                                </div>
-                                <div class="form-group">
-                                    <label>New Password</label>
-                                    <input type="password" id="newPassword" placeholder="Enter new password (min 8 characters)">
-                                </div>
-                                <div class="form-group">
-                                    <label>Confirm New Password</label>
-                                    <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
-                                </div>
+                            <div class="security-section"><h3>Change Password</h3>
+                                <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" placeholder="Enter current password"></div>
+                                <div class="form-group"><label>New Password</label><input type="password" id="newPassword" placeholder="Enter new password (min 8 characters)"></div>
+                                <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmNewPassword" placeholder="Confirm new password"></div>
                                 <button class="btn-primary" id="changePasswordBtn">Update Password</button>
                             </div>
-                            <div class="security-section">
-                                <h3>Session Management</h3>
-                                <p>Session timeout: <strong>30 minutes</strong> of inactivity</p>
-                                <button class="btn-secondary" id="extendSessionBtn">Extend Session</button>
+                            <div class="security-section"><h3>Session Management</h3><p>Session timeout: <strong>30 minutes</strong> of inactivity</p><button class="btn-secondary" id="extendSessionBtn">Extend Session</button></div>
+                            <div class="security-section"><h3>Data Export</h3><button class="btn-secondary" id="exportAllDataBtn"><i class="fas fa-database"></i> Export All My Data</button></div>
+                        </div>
+                    </div>
+                                        <!-- Payment History View -->
+                    <div id="paymentHistoryView" class="view-panel">
+                        <h2><i class="fas fa-history"></i> My Payment History</h2>
+                        
+                        <!-- Filters -->
+                        <div class="payment-filters">
+                            <div class="filter-group">
+                                <label><i class="fas fa-filter"></i> Filter by:</label>
+                                <select id="filterRound" class="filter-select">
+                                    <option value="all">All Rounds</option>
+                                    <option value="1">Round 1</option>
+                                    <option value="2">Round 2</option>
+                                    <option value="3">Round 3</option>
+                                    <option value="4">Round 4</option>
+                                    <option value="5">Round 5</option>
+                                    <option value="6">Round 6</option>
+                                </select>
                             </div>
-                            <div class="security-section">
-                                <h3>Data Export</h3>
-                                <p>Download all your transaction data</p>
-                                <button class="btn-secondary" id="exportAllDataBtn">
-                                    <i class="fas fa-database"></i> Export All My Data
+                            <div class="filter-group">
+                                <select id="filterStatus" class="filter-select">
+                                    <option value="all">All Status</option>
+                                    <option value="verified">Verified ✅</option>
+                                    <option value="pending">Pending ⏳</option>
+                                    <option value="rejected">Rejected ❌</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <input type="text" id="searchTransaction" placeholder="🔍 Search by transaction ref..." class="filter-search">
+                            </div>
+                            <div class="filter-group">
+                                <button id="exportPaymentHistoryBtn" class="btn-secondary export-payments-btn">
+                                    <i class="fas fa-download"></i> Export CSV
                                 </button>
                             </div>
+                        </div>
+                        
+                        <!-- Payment Summary Cards -->
+                        <div class="payment-summary-grid">
+                            <div class="summary-card total-paid">
+                                <div class="summary-icon"><i class="fas fa-money-bill-wave"></i></div>
+                                <div class="summary-info">
+                                    <span class="summary-label">Total Paid</span>
+                                    <span class="summary-value" id="totalPaidAmount">$0</span>
+                                </div>
+                            </div>
+                            <div class="summary-card total-withdrawn">
+                                <div class="summary-icon"><i class="fas fa-arrow-down"></i></div>
+                                <div class="summary-info">
+                                    <span class="summary-label">Total Withdrawn</span>
+                                    <span class="summary-value" id="totalWithdrawnAmount">$0</span>
+                                </div>
+                            </div>
+                            <div class="summary-card net-balance">
+                                <div class="summary-icon"><i class="fas fa-wallet"></i></div>
+                                <div class="summary-info">
+                                    <span class="summary-label">Net Balance</span>
+                                    <span class="summary-value" id="netBalanceAmount">$0</span>
+                                </div>
+                            </div>
+                            <div class="summary-card success-rate">
+                                <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="summary-info">
+                                    <span class="summary-label">Success Rate</span>
+                                    <span class="summary-value" id="successRate">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment History Table -->
+                        <div class="payment-table-container">
+                            <table class="payment-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Round</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Transaction Ref</th>
+                                        <th>Proof</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentHistoryBody">
+                                    <tr><td colspan="7" style="text-align:center">Loading payment history...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="pagination" id="paymentPagination">
+                            <button id="prevPage" class="page-btn" disabled>← Previous</button>
+                            <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                            <button id="nextPage" class="page-btn" disabled>Next →</button>
                         </div>
                     </div>
                 </main>
@@ -336,134 +266,45 @@
         </div>
     </div>
 
-    <!-- Contribute Modal with Screenshot Upload -->
-    <div id="contributeModal" class="modal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h3><i class="fas fa-hand-holding-usd"></i> Make Contribution</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="info-box">
-                    <i class="fas fa-info-circle"></i>
-                    <p>Default contribution amount: <strong>$50</strong> per round</p>
-                </div>
-                <div class="input-group">
-                    <label><i class="fas fa-dollar-sign"></i> Amount ($)</label>
-                    <input type="number" id="contributeAmount" value="50" step="10" min="10" required>
-                </div>
-                
-                <!-- Mandatory Screenshot Upload -->
-                <div class="input-group required">
-                    <label><i class="fas fa-camera"></i> Payment Screenshot / Proof <span class="required-star">*</span></label>
-                    <div class="upload-area" id="uploadArea">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Click or drag & drop to upload payment proof</p>
-                        <p class="upload-hint">Supported: JPG, PNG, PDF (Max 5MB)</p>
-                        <input type="file" id="paymentScreenshot" accept="image/*,application/pdf" style="display: none;">
-                        <button class="btn-secondary" id="uploadButton">Choose File</button>
-                    </div>
-                    <div id="uploadPreview" class="upload-preview"></div>
-                    <div class="form-hint">⚠️ Mandatory: Please upload screenshot of your bank transfer or mobile payment</div>
-                </div>
-
-                <div class="input-group">
-                    <label><i class="fas fa-comment"></i> Transaction Reference (Optional)</label>
-                    <input type="text" id="transactionRef" placeholder="Transaction ID / Reference number">
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn-secondary close-modal">Cancel</button>
-                    <button class="btn-primary" id="confirmContribute">Confirm Contribution</button>
-                </div>
-            </div>
+    <!-- Modals -->
+    <div id="contributeModal" class="modal"><div class="modal-content modal-large"><div class="modal-header"><h3>Make Contribution</h3><button class="close-modal">&times;</button></div><div class="modal-body">
+        <div class="info-box"><i class="fas fa-info-circle"></i><p>Default contribution amount: <strong>$50</strong> per round</p></div>
+        <div class="input-group"><label>Amount ($)</label><input type="number" id="contributeAmount" value="50" step="10" min="10"></div>
+        <div class="input-group required"><label>Payment Screenshot <span class="required-star">*</span></label>
+            <div class="upload-area" id="uploadArea"><i class="fas fa-cloud-upload-alt"></i><p>Click or drag & drop to upload payment proof</p><p class="upload-hint">Supported: JPG, PNG, PDF (Max 5MB)</p><input type="file" id="paymentScreenshot" accept="image/*,application/pdf" style="display:none"><button class="btn-secondary" id="uploadButton">Choose File</button></div>
+            <div id="uploadPreview" class="upload-preview"></div>
+            <div class="form-hint">⚠️ Mandatory: Please upload screenshot of your bank transfer or mobile payment</div>
         </div>
-    </div>
+        <div class="input-group"><label>Transaction Reference (Optional)</label><input type="text" id="transactionRef" placeholder="Transaction ID / Reference number"></div>
+        <div class="modal-actions"><button class="btn-secondary close-modal">Cancel</button><button class="btn-primary" id="confirmContribute">Confirm Contribution</button></div>
+    </div></div></div>
 
-    <!-- Withdraw Modal -->
-    <div id="withdrawModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-money-bill-wave"></i> Withdraw Funds</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="info-box warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Funds will be sent to your registered bank account</p>
-                </div>
-                <p>Your current balance: <strong id="withdrawBalance">$0</strong></p>
-                <div class="input-group">
-                    <label>Amount to Withdraw ($)</label>
-                    <input type="number" id="withdrawAmount" step="10" min="10">
-                </div>
-                <div class="modal-actions">
-                    <button class="btn-secondary close-modal">Cancel</button>
-                    <button class="btn-primary" id="confirmWithdraw">Confirm Withdrawal</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div id="withdrawModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Withdraw Funds</h3><button class="close-modal">&times;</button></div><div class="modal-body">
+        <div class="info-box warning"><i class="fas fa-exclamation-triangle"></i><p>Funds will be sent to your registered bank account</p></div>
+        <p>Your current balance: <strong id="withdrawBalance">$0</strong></p>
+        <div class="input-group"><label>Amount to Withdraw ($)</label><input type="number" id="withdrawAmount" step="10" min="10"></div>
+        <div class="modal-actions"><button class="btn-secondary close-modal">Cancel</button><button class="btn-primary" id="confirmWithdraw">Confirm Withdrawal</button></div>
+    </div></div></div>
 
-    <!-- View Proof Modal -->
-    <div id="proofModal" class="modal">
-        <div class="modal-content modal-medium">
-            <div class="modal-header">
-                <h3><i class="fas fa-receipt"></i> Payment Proof</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body" id="proofContent">
-                <div id="proofImage"></div>
-                <div id="proofDetails"></div>
-            </div>
-        </div>
-    </div>
+    <div id="proofModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Payment Proof</h3><button class="close-modal">&times;</button></div><div class="modal-body" id="proofContent"><div id="proofImage"></div><div id="proofDetails"></div></div></div></div>
 
     <div id="toast" class="toast"></div>
 
+    <!-- Floating Action Button -->
     <div class="quick-actions-fab" id="quickActionsFab">
-        <button class="fab-main" id="fabMain">
-            <i class="fas fa-plus"></i>
-        </button>
+        <button class="fab-main" id="fabMain"><i class="fas fa-plus"></i></button>
         <div class="fab-actions">
-            <button class="fab-action contribute-fab" id="fabContribute">
-                <i class="fas fa-hand-holding-usd"></i>
-                <span>Contribute</span>
-            </button>
-            <button class="fab-action withdraw-fab" id="fabWithdraw">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Withdraw</span>
-            </button>
+            <button class="fab-action contribute-fab" id="fabContribute"><i class="fas fa-hand-holding-usd"></i><span>Contribute</span></button>
+            <button class="fab-action withdraw-fab" id="fabWithdraw"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></button>
         </div>
     </div>
 
-    <script src="/admin-setup.js"></script>
-    <script src="/config.js"></script>
-    <script src="/database.js"></script>
-    <script src="/auth.js"></script>
-    <script src="/script.js"></script>
-    
-    <!-- Dynamic favicon updater for notifications -->
-    <script>
-        // Optional: Change favicon based on notifications
-        function updateFavicon(hasNotification) {
-            const favicon = document.querySelector("link[rel*='icon']");
-            if (hasNotification) {
-                // Change to notification favicon
-                favicon.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23f59e0b' stroke='white' stroke-width='2'/><text x='50' y='67' text-anchor='middle' font-size='44' fill='white'>🔔</text></svg>";
-                setTimeout(() => {
-                    favicon.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%233b82f6'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23g)' stroke='white' stroke-width='2'/><text x='50' y='67' text-anchor='middle' font-size='44' fill='white'>💰</text></svg>";
-                }, 3000);
-            }
-        }
-    </script>
-        <!-- Developer Footer with Amazing Hover Effects -->
+    <!-- Developer Footer with Working Clickable Links -->
     <footer class="developer-footer">
         <div class="footer-container">
             <div class="footer-divider">
                 <span class="divider-text">✨ Meet the Developer ✨</span>
             </div>
-            
             <div class="developer-info">
                 <div class="dev-avatar">
                     <i class="fas fa-code"></i>
@@ -473,38 +314,49 @@
                     <p class="dev-title"><i class="fas fa-terminal"></i> Full Stack Developer | AI Enthusiast</p>
                 </div>
             </div>
-            
             <div class="social-links">
-                <a href="https://sol-ethio-coder.netlify.app" target="_blank" class="social-link portfolio" rel="noopener noreferrer">
+                <!-- Portfolio Link -->
+                <a href="https://sol-ethio-coder.netlify.app" target="_blank" rel="noopener noreferrer" class="social-link portfolio">
                     <i class="fas fa-globe"></i>
                     <span>Portfolio</span>
                     <div class="link-tooltip">View my work</div>
                 </a>
                 
-                <a href="https://github.com/Sol-Ethio-Coder" target="_blank" class="social-link github" rel="noopener noreferrer">
+                <!-- GitHub Link -->
+                <a href="https://github.com/Sol-Ethio-Coder" target="_blank" rel="noopener noreferrer" class="social-link github">
                     <i class="fab fa-github"></i>
                     <span>GitHub</span>
                     <div class="link-tooltip">Check my repos</div>
                 </a>
                 
-                <a href="https://www.linkedin.com/in/Sol-Ethio-Coder/" target="_blank" class="social-link linkedin" rel="noopener noreferrer">
+                <!-- LinkedIn Link -->
+                <a href="https://www.linkedin.com/in/Sol-Ethio-Coder" target="_blank" rel="noopener noreferrer" class="social-link linkedin">
                     <i class="fab fa-linkedin-in"></i>
                     <span>LinkedIn</span>
                     <div class="link-tooltip">Connect with me</div>
                 </a>
                 
-                <a href="https://t.me/Sol_Ethio_Coder" target="_blank" class="social-link telegram" rel="noopener noreferrer">
+                <!-- Telegram Link -->
+                <a href="https://t.me/Sol_Ethio_Coder" target="_blank" rel="noopener noreferrer" class="social-link telegram">
                     <i class="fab fa-telegram-plane"></i>
                     <span>Telegram</span>
                     <div class="link-tooltip">Message me</div>
                 </a>
             </div>
-            
             <div class="footer-bottom">
                 <p>&copy; 2026 EquibHub | Built with <i class="fas fa-heart"></i> by Sol Ethio Coder</p>
                 <p class="footer-version">Version 2.0 | Secure Savings Circle</p>
             </div>
         </div>
     </footer>
+
+    <div class="cloud-status"></div>
+
+    <script src="/config.js"></script>
+    <script src="/cloudinary-upload.js"></script>
+    <script src="/database.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/script.js"></script>
+    <script src="/admin-setup.js"></script>
 </body>
 </html>
