@@ -1,4 +1,4 @@
-// admin-setup.js - Complete Admin Panel with Guaranteed Fix
+// admin-setup.js - Complete Admin Panel with User Management (Delete/Deactivate/Activate)
 
 class AdminManager {
     constructor() { 
@@ -220,6 +220,7 @@ class AdminManager {
         const stats = await this.getStats();
         const pending = await this.getPendingContributions();
         const members = await getMemberSummary();
+        const currentUser = getCurrentUser();
         
         // Get or create admin view panel
         let panel = document.getElementById('adminView');
@@ -279,6 +280,7 @@ class AdminManager {
                     <button class="admin-tab" data-tab="export">📥 Export</button>
                 </div>
                 
+                <!-- Pending Tab -->
                 <div id="pendingTab" class="admin-tab-content active">
                     <h3><i class="fas fa-clock"></i> Pending Verifications</h3>
                     ${pending.length === 0 ? 
@@ -309,6 +311,7 @@ class AdminManager {
                     }
                 </div>
                 
+                <!-- Members Tab with Delete/Deactivate/Activate -->
                 <div id="membersTab" class="admin-tab-content">
                     <h3><i class="fas fa-users"></i> Member Management</h3>
                     <div class="members-list">
@@ -319,17 +322,49 @@ class AdminManager {
                                         <strong>${m.name}</strong> ${!m.isActive ? '<span style="color:#ef4444">(Deactivated)</span>' : ''}<br>
                                         <small>${m.email}</small><br>
                                         <small>Role: ${m.role || 'member'} | Balance: $${m.balance} | Status: ${m.status}</small>
+                                        <br><small>💰 Total Paid: $${m.totalPaid} | 📦 Rounds: ${m.roundsPaid}/${CONFIG.TOTAL_ROUNDS}</small>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                        ${m.role !== 'admin' ? `<button class="btn-small" style="background: rgba(245,158,11,0.2); color: #f59e0b;" onclick="adminManager.makeAdmin('${m.id}')">Make Admin</button>` : '<span class="status-badge verified">Admin</span>'}
-                                        ${m.role !== 'admin' ? (m.isActive !== false ? `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.deactivateUser('${m.id}')">Deactivate</button>` : `<button class="btn-small" style="background: rgba(16,185,129,0.2); color: #10b981;" onclick="adminManager.activateUser('${m.id}')">Activate</button>`) : ''}
+                                        ${m.role !== 'admin' ? 
+                                            `<button class="btn-small" style="background: rgba(245,158,11,0.2); color: #f59e0b;" onclick="adminManager.makeAdmin('${m.id}')">
+                                                <i class="fas fa-crown"></i> Make Admin
+                                            </button>` : 
+                                            '<span class="status-badge verified">Admin</span>'}
+                                        
+                                        ${m.role !== 'admin' ? 
+                                            (m.isActive !== false ? 
+                                                `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.deactivateUser('${m.id}')">
+                                                    <i class="fas fa-pause-circle"></i> Deactivate
+                                                </button>` : 
+                                                `<button class="btn-small" style="background: rgba(16,185,129,0.2); color: #10b981;" onclick="adminManager.activateUser('${m.id}')">
+                                                    <i class="fas fa-play-circle"></i> Activate
+                                                </button>`) : ''
+                                        }
+                                        
+                                        <!-- Delete User Button -->
+                                        ${m.id !== currentUser?.id ? `
+                                            <button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.deleteUser('${m.id}')">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        ` : '<span style="font-size: 0.7rem; color: #64748b; padding: 0.3rem 0.6rem;">(You)</span>'}
                                     </div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
+                    
+                    <div class="info-box" style="margin-top: 1rem; background: rgba(239,68,68,0.1); border-left-color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                        <div>
+                            <strong>⚠️ User Management Notes:</strong><br>
+                            • <strong>Deactivate</strong> - Temporarily disables account (can be reactivated)<br>
+                            • <strong>Delete</strong> - Permanently removes user and ALL data (cannot be undone!)<br>
+                            • <strong>Make Admin</strong> - Grants administrative privileges
+                        </div>
+                    </div>
                 </div>
                 
+                <!-- Admins Tab -->
                 <div id="adminsTab" class="admin-tab-content">
                     <h3><i class="fas fa-user-plus"></i> Add New Admin</h3>
                     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -346,7 +381,9 @@ class AdminManager {
                                 </div>
                                 <div>
                                     ${members.filter(m => m.role === 'admin').length > 1 ? 
-                                        `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.removeAdmin('${admin.id}')">Remove Admin</button>` : 
+                                        `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.removeAdmin('${admin.id}')">
+                                            <i class="fas fa-user-minus"></i> Remove Admin
+                                        </button>` : 
                                         '<span class="status-badge verified">Last Admin</span>'}
                                 </div>
                             </div>
@@ -354,14 +391,16 @@ class AdminManager {
                     `).join('')}
                 </div>
                 
+                <!-- Security Tab -->
                 <div id="securityTab" class="admin-tab-content">
                     <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
                     <div style="background: var(--card-bg); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
                         <p><strong>📊 System Statistics:</strong></p>
-                        <p>Total Users: ${stats.totalMembers}</p>
-                        <p>Total Contributions: ${stats.totalContributions || 0}</p>
-                        <p>Total Collected: $${stats.totalCollected}</p>
-                        <p>Pending Amount: $${stats.pendingAmount || 0}</p>
+                        <p>👥 Total Users: ${stats.totalMembers}</p>
+                        <p>💰 Total Contributions: ${stats.totalContributions || 0}</p>
+                        <p>💵 Total Collected: $${stats.totalCollected}</p>
+                        <p>⏳ Pending Amount: $${stats.pendingAmount || 0}</p>
+                        <p>👑 Administrators: ${members.filter(m => m.role === 'admin').length}</p>
                     </div>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                         <button class="btn-secondary" onclick="adminManager.exportFullData()">📥 Export Full Data</button>
@@ -369,6 +408,7 @@ class AdminManager {
                     </div>
                 </div>
                 
+                <!-- Export Tab -->
                 <div id="exportTab" class="admin-tab-content">
                     <h3><i class="fas fa-download"></i> Export Data</h3>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
@@ -500,7 +540,7 @@ class AdminManager {
         if (user && user.role !== 'admin') {
             user.isActive = false;
             await updateUser(user);
-            showToast('User deactivated', 'success');
+            showToast(`✅ ${user.name} has been deactivated`, 'success');
             await this.refreshAdminPanel();
         }
     }
@@ -513,8 +553,85 @@ class AdminManager {
         if (user) {
             user.isActive = true;
             await updateUser(user);
-            showToast('User activated', 'success');
+            showToast(`✅ ${user.name} has been activated`, 'success');
             await this.refreshAdminPanel();
+        }
+    }
+    
+    // DELETE USER - Permanent removal with confirmation
+    async deleteUser(userId) {
+        const currentUser = getCurrentUser();
+        
+        // Check if admin
+        if (currentUser.role !== 'admin') { 
+            showToast('Admin access required', 'error'); 
+            return false;
+        }
+        
+        const users = await getAllUsers();
+        const userToDelete = users.find(u => u.id === userId);
+        
+        if (!userToDelete) {
+            showToast('User not found', 'error');
+            return false;
+        }
+        
+        // Don't allow deleting yourself
+        if (currentUser.id === userId) {
+            showToast('You cannot delete your own account!', 'error');
+            return false;
+        }
+        
+        // Don't allow deleting the last admin
+        const admins = users.filter(u => u.role === 'admin');
+        if (userToDelete.role === 'admin' && admins.length <= 1) {
+            showToast('Cannot delete the last admin!', 'error');
+            return false;
+        }
+        
+        // Double confirmation for safety
+        const confirmed = confirm(`⚠️ WARNING: You are about to permanently delete "${userToDelete.name}"!\n\nThis will remove:\n- All their contributions\n- Their balance ($${userToDelete.balance})\n- Their bank details\n- All transaction history\n\nThis action CANNOT be undone!\n\nClick OK to continue or Cancel to abort.`);
+        
+        if (!confirmed) return false;
+        
+        // Final confirmation with typing
+        const finalConfirm = prompt(`Type "DELETE" to permanently delete ${userToDelete.name}:`);
+        if (finalConfirm !== 'DELETE') {
+            showToast('Deletion cancelled', 'info');
+            return false;
+        }
+        
+        try {
+            // Remove user from users array
+            const updatedUsers = users.filter(u => u.id !== userId);
+            setStorageData(CONFIG.STORAGE_KEYS.USERS, updatedUsers);
+            
+            // Remove user's contributions
+            const contributions = await getAllContributions();
+            const updatedContributions = contributions.filter(c => c.userId !== userId);
+            setStorageData('equibhub_contributions', updatedContributions);
+            
+            // Remove user's withdrawals
+            const withdrawals = getStorageData('equibhub_withdrawals') || [];
+            const updatedWithdrawals = withdrawals.filter(w => w.userId !== userId);
+            setStorageData('equibhub_withdrawals', updatedWithdrawals);
+            
+            showToast(`✅ User "${userToDelete.name}" has been permanently deleted`, 'success');
+            
+            // Refresh admin panel
+            await this.refreshAdminPanel();
+            
+            // Refresh dashboard data if needed
+            if (typeof loadDashboardData === 'function') {
+                await loadDashboardData();
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error('Delete user error:', error);
+            showToast('Error deleting user', 'error');
+            return false;
         }
     }
     
@@ -530,7 +647,12 @@ class AdminManager {
         const data = { 
             users, contributions, rounds, withdrawals,
             exportedAt: new Date().toISOString(), 
-            exportedBy: currentUser.name
+            exportedBy: currentUser.name,
+            systemInfo: {
+                version: CONFIG.VERSION,
+                maxMembers: CONFIG.MAX_MEMBERS,
+                totalRounds: CONFIG.TOTAL_ROUNDS
+            }
         };
         
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -545,9 +667,9 @@ class AdminManager {
     
     async exportMembersCSV() {
         const members = await getMemberSummary();
-        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status\n';
+        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status,Is Active\n';
         members.forEach(m => { 
-            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status}\n`; 
+            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status},${m.isActive !== false ? 'Yes' : 'No'}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -618,7 +740,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Make adminManager available globally
 window.adminManager = adminManager;
 
-// Also add keyboard shortcut: Ctrl+Shift+A to open admin panel
+// Keyboard shortcut: Ctrl+Shift+A to open admin panel
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         e.preventDefault();
