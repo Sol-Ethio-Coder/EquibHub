@@ -1,48 +1,128 @@
-// admin-setup.js - Complete Admin Panel with Permanent Fix
+// admin-setup.js - Complete Admin Panel with Guaranteed Fix
 
 class AdminManager {
     constructor() { 
         this.isInitialized = false; 
-        this.retryCount = 0;
-        this.maxRetries = 10;
+        this.adminMenuItemAdded = false;
     }
     
     async init() { 
         if (this.isInitialized) return; 
         
-        console.log('AdminManager initializing...');
+        console.log('🔧 AdminManager initializing...');
         
         // Create pre-configured admin account on first load
         await this.createPreConfiguredAdmin();
         
-        // Wait a bit for user data to be ready, then add menu item
-        await this.waitForUserAndAddMenuItem();
+        // Add admin menu item with multiple attempts
+        await this.ensureAdminMenuItem();
         
         this.isInitialized = true; 
     }
     
-    // Wait for user to be available and then add menu item
-    async waitForUserAndAddMenuItem() {
-        let attempts = 0;
-        const maxAttempts = 20; // Try for up to 10 seconds
+    // Ensure admin menu item is added (with retries)
+    async ensureAdminMenuItem() {
+        // Try immediately
+        await this.tryAddAdminMenuItem();
         
-        while (attempts < maxAttempts) {
-            const user = getCurrentUser();
-            console.log(`Attempt ${attempts + 1}: Checking user role...`, user?.role);
-            
-            if (user && user.role === 'admin') {
-                console.log('✅ Admin user detected, adding menu item...');
-                await this.addAdminMenuItem();
-                return true;
+        // Try again after 1 second
+        setTimeout(() => this.tryAddAdminMenuItem(), 1000);
+        
+        // Try again after 3 seconds
+        setTimeout(() => this.tryAddAdminMenuItem(), 3000);
+        
+        // Try again after 5 seconds
+        setTimeout(() => this.tryAddAdminMenuItem(), 5000);
+    }
+    
+    async tryAddAdminMenuItem() {
+        // Get current user
+        let user = getCurrentUser();
+        
+        // If no user, try to get from storage
+        if (!user) {
+            const sessionData = sessionStorage.getItem(CONFIG.STORAGE_KEYS.SESSION);
+            if (sessionData) {
+                try {
+                    const parsed = JSON.parse(sessionData);
+                    user = parsed.user;
+                } catch(e) {}
             }
-            
-            // Wait 500ms before next attempt
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attempts++;
         }
         
-        console.warn('Could not add admin menu item: user not found or not admin after multiple attempts');
-        return false;
+        console.log('🔍 Current user check:', user ? { email: user.email, role: user.role } : 'No user');
+        
+        // If user exists but is not admin, try to fix
+        if (user && user.role !== 'admin') {
+            console.log('⚠️ User is not admin, attempting to fix...');
+            
+            // Check if this is the first user
+            const users = await getAllUsers();
+            if (users.length > 0 && users[0].email === user.email) {
+                // This is the first user, make them admin
+                users[0].role = 'admin';
+                users[0].isActive = true;
+                setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
+                
+                // Update session
+                user.role = 'admin';
+                setCurrentUser(user);
+                
+                console.log('✅ Fixed: First user is now admin');
+            }
+        }
+        
+        // Re-check user after potential fix
+        user = getCurrentUser();
+        
+        // Only proceed if user is admin
+        if (!user || user.role !== 'admin') {
+            console.log('❌ User is not admin, skipping admin menu');
+            return false;
+        }
+        
+        // Find sidebar
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        if (!sidebarNav) {
+            console.log('⚠️ Sidebar not found, will retry');
+            return false;
+        }
+        
+        // Check if already added
+        if (document.querySelector('.nav-item[data-view="admin"]')) {
+            console.log('✅ Admin menu already exists');
+            return true;
+        }
+        
+        // Create admin menu item
+        const adminItem = document.createElement('button');
+        adminItem.className = 'nav-item';
+        adminItem.setAttribute('data-view', 'admin');
+        adminItem.innerHTML = '<i class="fas fa-crown"></i><span>Admin Panel</span>';
+        adminItem.style.borderTop = '1px solid rgba(255,255,255,0.1)';
+        adminItem.style.marginTop = '1rem';
+        adminItem.style.paddingTop = '1rem';
+        
+        // Add click handler
+        adminItem.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log('👑 Admin panel clicked');
+            await this.renderAdminPanel();
+            
+            // Also update URL hash for direct access
+            window.location.hash = '#admin';
+        });
+        
+        sidebarNav.appendChild(adminItem);
+        this.adminMenuItemAdded = true;
+        console.log('✅ Admin menu item added successfully!');
+        
+        // If URL hash is #admin, open admin panel automatically
+        if (window.location.hash === '#admin') {
+            setTimeout(() => this.renderAdminPanel(), 500);
+        }
+        
+        return true;
     }
     
     // Create pre-configured admin account automatically
@@ -50,14 +130,12 @@ class AdminManager {
         try {
             const users = await getAllUsers();
             
-            // Check if any user exists
+            // If no users exist, create default admin
             if (users.length === 0) {
-                console.log('No users found. Creating pre-configured admin account...');
+                console.log('📝 No users found. Creating pre-configured admin account...');
                 
-                // Hash the password
                 const hashedPassword = await hashPassword('Admin123!');
                 
-                // Create admin user object with isActive = true
                 const adminUser = {
                     id: 'admin_' + Date.now(),
                     email: 'admin@equibhub.com',
@@ -91,49 +169,40 @@ class AdminManager {
                 console.log('📧 Email: admin@equibhub.com');
                 console.log('🔑 Password: Admin123!');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('⚠️  Please change this password after first login!');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
-                // Initialize rounds
                 await initRounds();
-                
                 return true;
-            } else {
-                // CRITICAL FIX: Always ensure the first user is admin
+            } 
+            // If users exist but no admin, make first user admin
+            else {
                 const adminExists = users.some(u => u.role === 'admin');
                 
                 if (!adminExists && users.length > 0) {
-                    // Make the first user admin
+                    console.log('📝 No admin found, promoting first user to admin...');
                     users[0].role = 'admin';
                     users[0].isActive = true;
                     setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                    console.log('✅ First user promoted to admin:', users[0].email);
+                    console.log(`✅ First user promoted to admin: ${users[0].email}`);
                     
-                    // ALSO update current session if this is the logged-in user
+                    // Update current session if this is the logged-in user
                     const currentUser = getCurrentUser();
                     if (currentUser && currentUser.id === users[0].id) {
                         setCurrentUser(users[0]);
-                        console.log('✅ Current session updated with admin role');
+                        console.log('✅ Current session updated');
                     }
                 }
                 
-                // Also ensure ALL users have isActive property and valid role
+                // Ensure all users have isActive property
                 let needsUpdate = false;
                 for (const user of users) {
                     if (user.isActive === undefined) {
                         user.isActive = true;
                         needsUpdate = true;
                     }
-                    // Ensure first user is admin (in case it got overwritten)
-                    if (user.id === users[0]?.id && user.role !== 'admin' && !adminExists) {
-                        user.role = 'admin';
-                        needsUpdate = true;
-                        console.log('✅ Fixed admin role for first user');
-                    }
                 }
                 if (needsUpdate) {
                     setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                    console.log('✅ Fixed missing properties for existing users');
+                    console.log('✅ Fixed missing isActive property for existing users');
                 }
                 
                 return false;
@@ -144,97 +213,15 @@ class AdminManager {
         }
     }
     
-    async addAdminMenuItem() {
-        // Get the current user
-        const user = getCurrentUser();
-        console.log('addAdminMenuItem called - User role:', user?.role);
-        
-        if (!user) {
-            console.log('No user logged in, cannot add admin menu');
-            return;
-        }
-        
-        if (user.role !== 'admin') {
-            console.log('User is not admin (role: ' + user.role + '), skipping admin menu');
-            return;
-        }
-        
-        // Find sidebar navigation
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        if (!sidebarNav) {
-            console.log('Sidebar nav not found, retrying...');
-            // Retry after a short delay
-            setTimeout(() => this.addAdminMenuItem(), 500);
-            return;
-        }
-        
-        // Check if admin menu already exists
-        if (document.querySelector('.nav-item[data-view="admin"]')) {
-            console.log('Admin menu already exists');
-            return;
-        }
-        
-        // Create admin menu item
-        const adminItem = document.createElement('button');
-        adminItem.className = 'nav-item';
-        adminItem.setAttribute('data-view', 'admin');
-        adminItem.innerHTML = '<i class="fas fa-crown"></i><span>Admin Panel</span>';
-        adminItem.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-        adminItem.style.marginTop = '1rem';
-        adminItem.style.paddingTop = '1rem';
-        
-        adminItem.addEventListener('click', async () => {
-            console.log('Admin panel clicked');
-            await this.renderAdminPanel();
-        });
-        
-        sidebarNav.appendChild(adminItem);
-        console.log('✅ Admin menu item added successfully');
-    }
-    
-    // Force show admin panel (for debugging)
-    async forceShowAdminPanel() {
-        console.log('Force showing admin panel...');
-        await this.renderAdminPanel();
-        
-        // Also ensure the admin menu item exists
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        if (sidebarNav && !document.querySelector('.nav-item[data-view="admin"]')) {
-            const adminItem = document.createElement('button');
-            adminItem.className = 'nav-item';
-            adminItem.setAttribute('data-view', 'admin');
-            adminItem.innerHTML = '<i class="fas fa-crown"></i><span>Admin Panel</span>';
-            adminItem.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-            adminItem.style.marginTop = '1rem';
-            adminItem.addEventListener('click', () => this.renderAdminPanel());
-            sidebarNav.appendChild(adminItem);
-            console.log('✅ Admin menu item added');
-        }
-    }
-    
     async renderAdminPanel() {
-        console.log('Rendering admin panel...');
+        console.log('🎨 Rendering admin panel...');
         
+        // Make sure we have the latest data
         const stats = await this.getStats();
         const pending = await this.getPendingContributions();
         const members = await getMemberSummary();
         
-        console.log('Pending contributions found:', pending.length);
-        if (pending.length > 0) {
-            console.log('Pending details:', pending);
-        }
-        
-        let systemStats = {};
-        
-        try {
-            if (typeof getSystemStats === 'function') {
-                const currentUser = getCurrentUser();
-                systemStats = await getSystemStats(currentUser.id);
-            }
-        } catch(e) {
-            systemStats = { totalUsers: members.length, activeUsers: members.filter(m => m.isActive !== false).length, admins: members.filter(m => m.role === 'admin').length };
-        }
-        
+        // Get or create admin view panel
         let panel = document.getElementById('adminView');
         if (!panel) { 
             panel = document.createElement('div'); 
@@ -243,18 +230,48 @@ class AdminManager {
             document.querySelector('.main-content').appendChild(panel); 
         }
         
+        // Admin panel HTML
         panel.innerHTML = `
             <div class="admin-panel">
-                <h2><i class="fas fa-crown"></i> Admin Dashboard</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Total Members</span><span class="stat-value">${stats.totalMembers}/${CONFIG.MAX_MEMBERS}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Pending Verifications</span><span class="stat-value" id="pendingCount">${stats.pendingCount}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Total Pool</span><span class="stat-value">$${stats.totalCollected}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Active Admins</span><span class="stat-value">${systemStats.admins || 1}</span></div></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0;"><i class="fas fa-crown"></i> Admin Dashboard</h2>
+                    <button class="btn-secondary" onclick="adminManager.refreshAdminPanel()" style="padding: 0.5rem 1rem;">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
                 
-                <div class="admin-tabs" style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Members</span>
+                            <span class="stat-value">${stats.totalMembers}/${CONFIG.MAX_MEMBERS}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Pending Verifications</span>
+                            <span class="stat-value" id="pendingCount">${stats.pendingCount}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Pool</span>
+                            <span class="stat-value">$${stats.totalCollected}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Contributions</span>
+                            <span class="stat-value">${stats.totalContributions || 0}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-tabs" style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                     <button class="admin-tab active" data-tab="pending">⏳ Pending (${stats.pendingCount})</button>
                     <button class="admin-tab" data-tab="members">👥 Members</button>
                     <button class="admin-tab" data-tab="admins">👑 Admins</button>
@@ -263,98 +280,103 @@ class AdminManager {
                 </div>
                 
                 <div id="pendingTab" class="admin-tab-content active">
-                    <h3>Pending Verifications</h3>
-                    <div id="pendingListContainer">
-                        ${pending.length === 0 ? 
-                            '<div class="info-box"><i class="fas fa-info-circle"></i><p>No pending verifications. All contributions have been verified!</p></div>' : 
-                            `<div class="pending-list">
-                                ${pending.map(p => `
-                                    <div class="round-item" style="margin-bottom: 10px;">
+                    <h3><i class="fas fa-clock"></i> Pending Verifications</h3>
+                    ${pending.length === 0 ? 
+                        '<div class="info-box"><i class="fas fa-check-circle"></i><p>No pending verifications. All caught up!</p></div>' : 
+                        `<div class="pending-list">
+                            ${pending.map(p => `
+                                <div class="pending-item" style="background: var(--card-bg); border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; border: 1px solid var(--border-color);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                         <div>
-                                            <strong>${p.userName}</strong><br>
-                                            💰 Amount: $${p.amount}<br>
-                                            🔄 Round: ${p.round}<br>
-                                            📅 Date: ${new Date(p.date).toLocaleString()}<br>
-                                            ${p.transactionRef ? `📝 Ref: ${p.transactionRef}` : ''}
+                                            <strong style="font-size: 1.1rem;">${p.userName}</strong><br>
+                                            <span style="color: var(--success);">💰 Amount: $${p.amount}</span><br>
+                                            <span>🔄 Round: ${p.round}</span><br>
+                                            <small>📅 ${new Date(p.date).toLocaleString()}</small><br>
+                                            ${p.transactionRef ? `<small>📝 Ref: ${p.transactionRef}</small>` : ''}
                                         </div>
-                                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                            <button class="btn-small" style="background: rgba(16,185,129,0.2); color: #10b981;" onclick="adminManager.viewProofAndVerify('${p.id}')">
-                                                <i class="fas fa-image"></i> View Proof & Verify
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button class="btn-primary" style="background: #10b981; padding: 0.5rem 1rem;" onclick="adminManager.verifyContributionAndRefresh('${p.id}')">
+                                                <i class="fas fa-check-circle"></i> Verify
                                             </button>
-                                            <button class="btn-small" style="background: rgba(59,130,246,0.2);" onclick="viewProof('${p.id}')">
-                                                <i class="fas fa-eye"></i> View Only
+                                            <button class="btn-secondary" onclick="viewProof('${p.id}')">
+                                                <i class="fas fa-image"></i> View Proof
                                             </button>
                                         </div>
                                     </div>
-                                `).join('')}
-                            </div>`
-                        }
-                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`
+                    }
                 </div>
                 
                 <div id="membersTab" class="admin-tab-content">
-                    <h3>Member Management</h3>
-                    ${members.map(m => `
-                        <div class="member-card">
-                            <div class="member-info">
-                                <div class="member-name">${m.name} ${m.isActive === false ? '<span style="color:#ef4444"> (Deactivated)</span>' : ''}</div>
-                                <div>${m.email}</div>
-                                <div>Role: ${m.role || 'member'} | Balance: $${m.balance} | Status: ${m.status}</div>
+                    <h3><i class="fas fa-users"></i> Member Management</h3>
+                    <div class="members-list">
+                        ${members.map(m => `
+                            <div class="member-admin-card" style="background: var(--card-bg); border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; border: 1px solid var(--border-color);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                    <div>
+                                        <strong>${m.name}</strong> ${!m.isActive ? '<span style="color:#ef4444">(Deactivated)</span>' : ''}<br>
+                                        <small>${m.email}</small><br>
+                                        <small>Role: ${m.role || 'member'} | Balance: $${m.balance} | Status: ${m.status}</small>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        ${m.role !== 'admin' ? `<button class="btn-small" style="background: rgba(245,158,11,0.2); color: #f59e0b;" onclick="adminManager.makeAdmin('${m.id}')">Make Admin</button>` : '<span class="status-badge verified">Admin</span>'}
+                                        ${m.role !== 'admin' ? (m.isActive !== false ? `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.deactivateUser('${m.id}')">Deactivate</button>` : `<button class="btn-small" style="background: rgba(16,185,129,0.2); color: #10b981;" onclick="adminManager.activateUser('${m.id}')">Activate</button>`) : ''}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="member-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                                ${m.role !== 'admin' ? `<button class="btn-small" onclick="adminManager.makeAdmin('${m.id}')">Make Admin</button>` : '<span class="status-badge verified">Admin</span>'}
-                                ${m.role !== 'admin' ? (m.isActive !== false ? `<button class="btn-small" style="background:rgba(239,68,68,0.2)" onclick="adminManager.deactivateUser('${m.id}')">Deactivate</button>` : `<button class="btn-small" style="background:rgba(16,185,129,0.2)" onclick="adminManager.activateUser('${m.id}')">Activate</button>`) : ''}
-                            </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
                 
                 <div id="adminsTab" class="admin-tab-content">
-                    <h3>Add New Admin</h3>
-                    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-                        <input type="email" id="newAdminEmail" placeholder="Enter user email" style="flex:1; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:0.8rem; color:var(--text-primary);">
+                    <h3><i class="fas fa-user-plus"></i> Add New Admin</h3>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                        <input type="email" id="newAdminEmail" placeholder="Enter user email" style="flex: 1; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 0.8rem; color: var(--text-primary);">
                         <button class="btn-primary" onclick="adminManager.addAdminByEmail()">Make Admin</button>
                     </div>
-                    <h3>Current Administrators</h3>
+                    <h3><i class="fas fa-crown"></i> Current Administrators</h3>
                     ${members.filter(m => m.role === 'admin').map(admin => `
-                        <div class="member-card">
-                            <div class="member-info">
-                                <div class="member-name">${admin.name}</div>
-                                <div>${admin.email}</div>
-                                <div>Role: Super Admin</div>
+                        <div class="member-admin-card" style="background: var(--card-bg); border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <strong>${admin.name}</strong><br>
+                                    <small>${admin.email}</small>
+                                </div>
+                                <div>
+                                    ${members.filter(m => m.role === 'admin').length > 1 ? 
+                                        `<button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.removeAdmin('${admin.id}')">Remove Admin</button>` : 
+                                        '<span class="status-badge verified">Last Admin</span>'}
+                                </div>
                             </div>
-                            <div>${members.filter(m => m.role === 'admin').length > 1 ? `<button class="btn-small" style="background:rgba(239,68,68,0.2)" onclick="adminManager.removeAdmin('${admin.id}')">Remove Admin</button>` : '<span class="status-badge verified">Last Admin</span>'}</div>
                         </div>
                     `).join('')}
                 </div>
                 
                 <div id="securityTab" class="admin-tab-content">
-                    <h3>Security Settings</h3>
-                    <div class="security-card">
-                        <div class="security-section">
-                            <h3>System Information</h3>
-                            <p><strong>Default Admin Email:</strong> admin@equibhub.com</p>
-                            <p><strong>Total Users:</strong> ${systemStats.totalUsers || members.length}</p>
-                            <p><strong>Active Users:</strong> ${systemStats.activeUsers || members.filter(m => m.isActive !== false).length}</p>
-                            <p><strong>Total Contributions:</strong> $${stats.totalCollected}</p>
-                            <p><strong>Pending Amount:</strong> $${stats.pendingAmount || 0}</p>
-                        </div>
-                        <div class="security-section">
-                            <h3>Data Management</h3>
-                            <button class="btn-secondary" onclick="adminManager.exportFullData()">📥 Export Full System Data</button>
-                            <button class="btn-secondary" onclick="adminManager.backupData()" style="margin-left:0.5rem;">💾 Create Backup</button>
-                        </div>
+                    <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                    <div style="background: var(--card-bg); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                        <p><strong>📊 System Statistics:</strong></p>
+                        <p>Total Users: ${stats.totalMembers}</p>
+                        <p>Total Contributions: ${stats.totalContributions || 0}</p>
+                        <p>Total Collected: $${stats.totalCollected}</p>
+                        <p>Pending Amount: $${stats.pendingAmount || 0}</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn-secondary" onclick="adminManager.exportFullData()">📥 Export Full Data</button>
+                        <button class="btn-secondary" onclick="adminManager.backupData()">💾 Backup to Cloud</button>
                     </div>
                 </div>
                 
                 <div id="exportTab" class="admin-tab-content">
-                    <h3>Export Data</h3>
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                        <button class="btn-primary" onclick="adminManager.exportFullData()">📥 Export Full System Data (JSON)</button>
+                    <h3><i class="fas fa-download"></i> Export Data</h3>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <button class="btn-primary" onclick="adminManager.exportFullData()">📥 Export Full Data (JSON)</button>
                         <button class="btn-secondary" onclick="adminManager.exportMembersCSV()">👥 Export Members (CSV)</button>
                         <button class="btn-secondary" onclick="adminManager.exportContributionsCSV()">💰 Export Contributions (CSV)</button>
                     </div>
-                    <div class="info-box" style="margin-top:1rem;">
+                    <div class="info-box">
                         <i class="fas fa-info-circle"></i>
                         <p>Exports include all user data, contributions, and system settings.</p>
                     </div>
@@ -369,12 +391,27 @@ class AdminManager {
                 document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
                 tab.classList.add('active');
-                document.getElementById(`${tabName}Tab`).classList.add('active');
+                const contentDiv = document.getElementById(`${tabName}Tab`);
+                if (contentDiv) contentDiv.classList.add('active');
             });
         });
         
+        // Hide all other views and show admin panel
         document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
         panel.classList.add('active');
+        
+        console.log('✅ Admin panel rendered successfully');
+    }
+    
+    async refreshAdminPanel() {
+        console.log('🔄 Refreshing admin panel...');
+        await this.renderAdminPanel();
+        showToast('Admin panel refreshed!', 'success');
+    }
+    
+    async verifyContributionAndRefresh(contributionId) {
+        await this.verify(contributionId);
+        await this.refreshAdminPanel();
     }
     
     async getStats() { 
@@ -387,7 +424,8 @@ class AdminManager {
             totalMembers: users.length, 
             pendingCount: pending.length, 
             totalCollected: verified.reduce((s,c) => s + c.amount, 0).toFixed(2),
-            pendingAmount: pendingAmount.toFixed(2)
+            pendingAmount: pendingAmount.toFixed(2),
+            totalContributions: contributions.filter(c => c.amount > 0).length
         }; 
     }
     
@@ -395,9 +433,7 @@ class AdminManager {
         const contributions = await getAllContributions(); 
         const users = await getAllUsers(); 
         const userMap = Object.fromEntries(users.map(u => [u.id, { name: u.name }])); 
-        console.log('All contributions:', contributions);
         const pending = contributions.filter(c => c.status === 'pending' && c.amount > 0);
-        console.log('Filtered pending:', pending);
         return pending.map(c => ({ 
             id: c.id, 
             userName: userMap[c.userId]?.name || 'Unknown', 
@@ -412,51 +448,8 @@ class AdminManager {
         const user = getCurrentUser(); 
         if (user.role !== 'admin') { showToast('Admin access required', 'error'); return; }
         await verifyContribution(id, user.id); 
-        showToast('Verified!', 'success'); 
-        this.renderAdminPanel(); 
+        showToast('✅ Contribution verified!', 'success'); 
         if (typeof loadDashboardData === 'function') loadDashboardData(); 
-    }
-    
-    // New method to view proof and verify in one flow
-    async viewProofAndVerify(contributionId) {
-        try {
-            const contribution = await getContributionById(contributionId);
-            if (!contribution) {
-                showToast('Contribution not found', 'error');
-                return;
-            }
-            
-            // Create a modal to show proof and verify
-            const modal = document.getElementById('proofModal');
-            const proofImage = document.getElementById('proofImage');
-            const proofDetails = document.getElementById('proofDetails');
-            
-            if (contribution.screenshotURL) {
-                proofImage.innerHTML = `<img src="${contribution.screenshotURL}" alt="Payment Proof" style="max-width:100%;max-height:300px;border-radius:8px">`;
-            } else {
-                proofImage.innerHTML = '<p>No proof available</p>';
-            }
-            
-            proofDetails.innerHTML = `
-                <p><strong>Amount:</strong> $${contribution.amount}</p>
-                <p><strong>Date:</strong> ${new Date(contribution.date).toLocaleString()}</p>
-                <p><strong>Transaction Ref:</strong> ${contribution.transactionRef || 'N/A'}</p>
-                <p><strong>Status:</strong> ${contribution.status}</p>
-                <button class="btn-primary" onclick="adminManager.verifyAndCloseModal('${contribution.id}')" style="margin-top: 1rem;">
-                    <i class="fas fa-check-circle"></i> Verify This Contribution
-                </button>
-            `;
-            
-            modal.classList.add('active');
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Error loading proof', 'error');
-        }
-    }
-    
-    async verifyAndCloseModal(contributionId) {
-        await this.verify(contributionId);
-        closeAllModals();
     }
     
     async makeAdmin(userId) { 
@@ -469,7 +462,7 @@ class AdminManager {
             user.isActive = true;
             await updateUser(user); 
             showToast(`${user.name} is now admin`, 'success'); 
-            this.renderAdminPanel(); 
+            await this.refreshAdminPanel();
         } 
     }
     
@@ -484,7 +477,7 @@ class AdminManager {
             user.role = 'member';
             await updateUser(user);
             showToast(`${user.name} is no longer admin`, 'success');
-            this.renderAdminPanel();
+            await this.refreshAdminPanel();
         }
     }
     
@@ -496,7 +489,7 @@ class AdminManager {
         const user = users.find(u => u.email === email);
         if (!user) { showToast('User not found', 'error'); return; }
         await this.makeAdmin(user.id);
-        emailInput.value = '';
+        if (emailInput) emailInput.value = '';
     }
     
     async deactivateUser(userId) {
@@ -507,9 +500,9 @@ class AdminManager {
         if (user && user.role !== 'admin') {
             user.isActive = false;
             await updateUser(user);
+            showToast('User deactivated', 'success');
+            await this.refreshAdminPanel();
         }
-        showToast('User deactivated', 'success');
-        this.renderAdminPanel();
     }
     
     async activateUser(userId) {
@@ -520,9 +513,9 @@ class AdminManager {
         if (user) {
             user.isActive = true;
             await updateUser(user);
+            showToast('User activated', 'success');
+            await this.refreshAdminPanel();
         }
-        showToast('User activated', 'success');
-        this.renderAdminPanel();
     }
     
     async exportFullData() {
@@ -535,34 +528,26 @@ class AdminManager {
         const withdrawals = getStorageData('equibhub_withdrawals') || [];
         
         const data = { 
-            users, 
-            contributions, 
-            rounds, 
-            withdrawals, 
+            users, contributions, rounds, withdrawals,
             exportedAt: new Date().toISOString(), 
-            exportedBy: currentUser.name,
-            systemInfo: {
-                version: CONFIG.VERSION,
-                maxMembers: CONFIG.MAX_MEMBERS,
-                totalRounds: CONFIG.TOTAL_ROUNDS
-            }
+            exportedBy: currentUser.name
         };
         
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `equibhub_full_export_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `equibhub_export_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast('Full data exported!', 'success');
+        showToast('Data exported!', 'success');
     }
     
     async exportMembersCSV() {
         const members = await getMemberSummary();
-        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status,Is Active\n';
+        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status\n';
         members.forEach(m => { 
-            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status},${m.isActive !== false ? 'Yes' : 'No'}\n`; 
+            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -596,13 +581,13 @@ class AdminManager {
         showToast('Creating backup...', 'info');
         if (typeof syncAllToCloud === 'function') {
             await syncAllToCloud();
-            showToast('Backup completed! Data synced to cloud.', 'success');
+            showToast('Backup completed!', 'success');
         } else {
-            showToast('Backup function not available', 'error');
+            showToast('Sync function not available', 'error');
         }
     }
     
-    // Helper method to show default admin credentials
+    // Helper to show default admin credentials
     showDefaultAdminCredentials() {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('👑 DEFAULT ADMIN CREDENTIALS');
@@ -619,7 +604,7 @@ const adminManager = new AdminManager();
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => { 
-    console.log('DOM ready, initializing AdminManager...');
+    console.log('🚀 DOM ready, initializing AdminManager...');
     await adminManager.init(); 
     
     const users = await getAllUsers();
@@ -627,671 +612,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         adminManager.showDefaultAdminCredentials();
     }
     
-    // Extra safety: check if current user should be admin but isn't
-    const currentUser = getCurrentUser();
-    if (currentUser && users.length > 0 && users[0]?.id === currentUser.id && currentUser.role !== 'admin') {
-        console.log('Fixing: First user should be admin but is not. Applying fix...');
-        users[0].role = 'admin';
-        users[0].isActive = true;
-        setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-        setCurrentUser(users[0]);
-        console.log('✅ Fixed: First user is now admin. Please refresh.');
-    }
+    console.log('✅ AdminManager initialization complete');
 });
 
 // Make adminManager available globally
 window.adminManager = adminManager;
 
-// Also add a global helper to force show admin panel (for debugging)
-window.forceShowAdmin = async function() {
-    console.log('Force showing admin panel...');
-    await adminManager.forceShowAdminPanel();
-};// admin-setup.js - Complete Admin Panel with Permanent Fix
-
-class AdminManager {
-    constructor() { 
-        this.isInitialized = false; 
-        this.retryCount = 0;
-        this.maxRetries = 10;
-    }
-    
-    async init() { 
-        if (this.isInitialized) return; 
-        
-        console.log('AdminManager initializing...');
-        
-        // Create pre-configured admin account on first load
-        await this.createPreConfiguredAdmin();
-        
-        // Wait a bit for user data to be ready, then add menu item
-        await this.waitForUserAndAddMenuItem();
-        
-        this.isInitialized = true; 
-    }
-    
-    // Wait for user to be available and then add menu item
-    async waitForUserAndAddMenuItem() {
-        let attempts = 0;
-        const maxAttempts = 20; // Try for up to 10 seconds
-        
-        while (attempts < maxAttempts) {
-            const user = getCurrentUser();
-            console.log(`Attempt ${attempts + 1}: Checking user role...`, user?.role);
-            
-            if (user && user.role === 'admin') {
-                console.log('✅ Admin user detected, adding menu item...');
-                await this.addAdminMenuItem();
-                return true;
-            }
-            
-            // Wait 500ms before next attempt
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attempts++;
-        }
-        
-        console.warn('Could not add admin menu item: user not found or not admin after multiple attempts');
-        return false;
-    }
-    
-    // Create pre-configured admin account automatically
-    async createPreConfiguredAdmin() {
-        try {
-            const users = await getAllUsers();
-            
-            // Check if any user exists
-            if (users.length === 0) {
-                console.log('No users found. Creating pre-configured admin account...');
-                
-                // Hash the password
-                const hashedPassword = await hashPassword('Admin123!');
-                
-                // Create admin user object with isActive = true
-                const adminUser = {
-                    id: 'admin_' + Date.now(),
-                    email: 'admin@equibhub.com',
-                    password: `hashed:${hashedPassword}`,
-                    name: 'System Administrator',
-                    balance: 0,
-                    totalContributed: 0,
-                    createdAt: new Date().toISOString(),
-                    lastLogin: null,
-                    role: 'admin',
-                    isActive: true,
-                    bankDetails: {
-                        accountName: '',
-                        bankName: '',
-                        accountNumber: '',
-                        routingNumber: '',
-                        mobileMoneyId: ''
-                    },
-                    securitySettings: {
-                        twoFactorEnabled: false,
-                        lastPasswordChange: new Date().toISOString()
-                    }
-                };
-                
-                users.push(adminUser);
-                setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('✅ PRE-CONFIGURED ADMIN ACCOUNT CREATED!');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('📧 Email: admin@equibhub.com');
-                console.log('🔑 Password: Admin123!');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('⚠️  Please change this password after first login!');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                
-                // Initialize rounds
-                await initRounds();
-                
-                return true;
-            } else {
-                // CRITICAL FIX: Always ensure the first user is admin
-                const adminExists = users.some(u => u.role === 'admin');
-                
-                if (!adminExists && users.length > 0) {
-                    // Make the first user admin
-                    users[0].role = 'admin';
-                    users[0].isActive = true;
-                    setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                    console.log('✅ First user promoted to admin:', users[0].email);
-                    
-                    // ALSO update current session if this is the logged-in user
-                    const currentUser = getCurrentUser();
-                    if (currentUser && currentUser.id === users[0].id) {
-                        setCurrentUser(users[0]);
-                        console.log('✅ Current session updated with admin role');
-                    }
-                }
-                
-                // Also ensure ALL users have isActive property and valid role
-                let needsUpdate = false;
-                for (const user of users) {
-                    if (user.isActive === undefined) {
-                        user.isActive = true;
-                        needsUpdate = true;
-                    }
-                    // Ensure first user is admin (in case it got overwritten)
-                    if (user.id === users[0]?.id && user.role !== 'admin' && !adminExists) {
-                        user.role = 'admin';
-                        needsUpdate = true;
-                        console.log('✅ Fixed admin role for first user');
-                    }
-                }
-                if (needsUpdate) {
-                    setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                    console.log('✅ Fixed missing properties for existing users');
-                }
-                
-                return false;
-            }
-        } catch (error) {
-            console.error('Error creating pre-configured admin:', error);
-            return false;
-        }
-    }
-    
-    async addAdminMenuItem() {
-        // Get the current user
-        const user = getCurrentUser();
-        console.log('addAdminMenuItem called - User role:', user?.role);
-        
-        if (!user) {
-            console.log('No user logged in, cannot add admin menu');
-            return;
-        }
-        
-        if (user.role !== 'admin') {
-            console.log('User is not admin (role: ' + user.role + '), skipping admin menu');
-            return;
-        }
-        
-        // Find sidebar navigation
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        if (!sidebarNav) {
-            console.log('Sidebar nav not found, retrying...');
-            // Retry after a short delay
-            setTimeout(() => this.addAdminMenuItem(), 500);
-            return;
-        }
-        
-        // Check if admin menu already exists
-        if (document.querySelector('.nav-item[data-view="admin"]')) {
-            console.log('Admin menu already exists');
-            return;
-        }
-        
-        // Create admin menu item
-        const adminItem = document.createElement('button');
-        adminItem.className = 'nav-item';
-        adminItem.setAttribute('data-view', 'admin');
-        adminItem.innerHTML = '<i class="fas fa-crown"></i><span>Admin Panel</span>';
-        adminItem.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-        adminItem.style.marginTop = '1rem';
-        adminItem.style.paddingTop = '1rem';
-        
-        adminItem.addEventListener('click', async () => {
-            console.log('Admin panel clicked');
-            await this.renderAdminPanel();
-        });
-        
-        sidebarNav.appendChild(adminItem);
-        console.log('✅ Admin menu item added successfully');
-    }
-    
-    // Force show admin panel (for debugging)
-    async forceShowAdminPanel() {
-        console.log('Force showing admin panel...');
-        await this.renderAdminPanel();
-        
-        // Also ensure the admin menu item exists
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        if (sidebarNav && !document.querySelector('.nav-item[data-view="admin"]')) {
-            const adminItem = document.createElement('button');
-            adminItem.className = 'nav-item';
-            adminItem.setAttribute('data-view', 'admin');
-            adminItem.innerHTML = '<i class="fas fa-crown"></i><span>Admin Panel</span>';
-            adminItem.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-            adminItem.style.marginTop = '1rem';
-            adminItem.addEventListener('click', () => this.renderAdminPanel());
-            sidebarNav.appendChild(adminItem);
-            console.log('✅ Admin menu item added');
-        }
-    }
-    
-    async renderAdminPanel() {
-        console.log('Rendering admin panel...');
-        
-        const stats = await this.getStats();
-        const pending = await this.getPendingContributions();
-        const members = await getMemberSummary();
-        
-        console.log('Pending contributions found:', pending.length);
-        if (pending.length > 0) {
-            console.log('Pending details:', pending);
-        }
-        
-        let systemStats = {};
-        
-        try {
-            if (typeof getSystemStats === 'function') {
-                const currentUser = getCurrentUser();
-                systemStats = await getSystemStats(currentUser.id);
-            }
-        } catch(e) {
-            systemStats = { totalUsers: members.length, activeUsers: members.filter(m => m.isActive !== false).length, admins: members.filter(m => m.role === 'admin').length };
-        }
-        
-        let panel = document.getElementById('adminView');
-        if (!panel) { 
-            panel = document.createElement('div'); 
-            panel.id = 'adminView'; 
-            panel.className = 'view-panel'; 
-            document.querySelector('.main-content').appendChild(panel); 
-        }
-        
-        panel.innerHTML = `
-            <div class="admin-panel">
-                <h2><i class="fas fa-crown"></i> Admin Dashboard</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Total Members</span><span class="stat-value">${stats.totalMembers}/${CONFIG.MAX_MEMBERS}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Pending Verifications</span><span class="stat-value" id="pendingCount">${stats.pendingCount}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Total Pool</span><span class="stat-value">$${stats.totalCollected}</span></div></div>
-                    <div class="stat-card"><div class="stat-info"><span class="stat-label">Active Admins</span><span class="stat-value">${systemStats.admins || 1}</span></div></div>
-                </div>
-                
-                <div class="admin-tabs" style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-                    <button class="admin-tab active" data-tab="pending">⏳ Pending (${stats.pendingCount})</button>
-                    <button class="admin-tab" data-tab="members">👥 Members</button>
-                    <button class="admin-tab" data-tab="admins">👑 Admins</button>
-                    <button class="admin-tab" data-tab="security">🔒 Security</button>
-                    <button class="admin-tab" data-tab="export">📥 Export</button>
-                </div>
-                
-                <div id="pendingTab" class="admin-tab-content active">
-                    <h3>Pending Verifications</h3>
-                    <div id="pendingListContainer">
-                        ${pending.length === 0 ? 
-                            '<div class="info-box"><i class="fas fa-info-circle"></i><p>No pending verifications. All contributions have been verified!</p></div>' : 
-                            `<div class="pending-list">
-                                ${pending.map(p => `
-                                    <div class="round-item" style="margin-bottom: 10px;">
-                                        <div>
-                                            <strong>${p.userName}</strong><br>
-                                            💰 Amount: $${p.amount}<br>
-                                            🔄 Round: ${p.round}<br>
-                                            📅 Date: ${new Date(p.date).toLocaleString()}<br>
-                                            ${p.transactionRef ? `📝 Ref: ${p.transactionRef}` : ''}
-                                        </div>
-                                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                            <button class="btn-small" style="background: rgba(16,185,129,0.2); color: #10b981;" onclick="adminManager.viewProofAndVerify('${p.id}')">
-                                                <i class="fas fa-image"></i> View Proof & Verify
-                                            </button>
-                                            <button class="btn-small" style="background: rgba(59,130,246,0.2);" onclick="viewProof('${p.id}')">
-                                                <i class="fas fa-eye"></i> View Only
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>`
-                        }
-                    </div>
-                </div>
-                
-                <div id="membersTab" class="admin-tab-content">
-                    <h3>Member Management</h3>
-                    ${members.map(m => `
-                        <div class="member-card">
-                            <div class="member-info">
-                                <div class="member-name">${m.name} ${m.isActive === false ? '<span style="color:#ef4444"> (Deactivated)</span>' : ''}</div>
-                                <div>${m.email}</div>
-                                <div>Role: ${m.role || 'member'} | Balance: $${m.balance} | Status: ${m.status}</div>
-                            </div>
-                            <div class="member-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                                ${m.role !== 'admin' ? `<button class="btn-small" onclick="adminManager.makeAdmin('${m.id}')">Make Admin</button>` : '<span class="status-badge verified">Admin</span>'}
-                                ${m.role !== 'admin' ? (m.isActive !== false ? `<button class="btn-small" style="background:rgba(239,68,68,0.2)" onclick="adminManager.deactivateUser('${m.id}')">Deactivate</button>` : `<button class="btn-small" style="background:rgba(16,185,129,0.2)" onclick="adminManager.activateUser('${m.id}')">Activate</button>`) : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div id="adminsTab" class="admin-tab-content">
-                    <h3>Add New Admin</h3>
-                    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-                        <input type="email" id="newAdminEmail" placeholder="Enter user email" style="flex:1; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:0.8rem; color:var(--text-primary);">
-                        <button class="btn-primary" onclick="adminManager.addAdminByEmail()">Make Admin</button>
-                    </div>
-                    <h3>Current Administrators</h3>
-                    ${members.filter(m => m.role === 'admin').map(admin => `
-                        <div class="member-card">
-                            <div class="member-info">
-                                <div class="member-name">${admin.name}</div>
-                                <div>${admin.email}</div>
-                                <div>Role: Super Admin</div>
-                            </div>
-                            <div>${members.filter(m => m.role === 'admin').length > 1 ? `<button class="btn-small" style="background:rgba(239,68,68,0.2)" onclick="adminManager.removeAdmin('${admin.id}')">Remove Admin</button>` : '<span class="status-badge verified">Last Admin</span>'}</div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div id="securityTab" class="admin-tab-content">
-                    <h3>Security Settings</h3>
-                    <div class="security-card">
-                        <div class="security-section">
-                            <h3>System Information</h3>
-                            <p><strong>Default Admin Email:</strong> admin@equibhub.com</p>
-                            <p><strong>Total Users:</strong> ${systemStats.totalUsers || members.length}</p>
-                            <p><strong>Active Users:</strong> ${systemStats.activeUsers || members.filter(m => m.isActive !== false).length}</p>
-                            <p><strong>Total Contributions:</strong> $${stats.totalCollected}</p>
-                            <p><strong>Pending Amount:</strong> $${stats.pendingAmount || 0}</p>
-                        </div>
-                        <div class="security-section">
-                            <h3>Data Management</h3>
-                            <button class="btn-secondary" onclick="adminManager.exportFullData()">📥 Export Full System Data</button>
-                            <button class="btn-secondary" onclick="adminManager.backupData()" style="margin-left:0.5rem;">💾 Create Backup</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="exportTab" class="admin-tab-content">
-                    <h3>Export Data</h3>
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                        <button class="btn-primary" onclick="adminManager.exportFullData()">📥 Export Full System Data (JSON)</button>
-                        <button class="btn-secondary" onclick="adminManager.exportMembersCSV()">👥 Export Members (CSV)</button>
-                        <button class="btn-secondary" onclick="adminManager.exportContributionsCSV()">💰 Export Contributions (CSV)</button>
-                    </div>
-                    <div class="info-box" style="margin-top:1rem;">
-                        <i class="fas fa-info-circle"></i>
-                        <p>Exports include all user data, contributions, and system settings.</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Add tab switching
-        document.querySelectorAll('.admin-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(`${tabName}Tab`).classList.add('active');
-            });
-        });
-        
-        document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
-        panel.classList.add('active');
-    }
-    
-    async getStats() { 
-        const users = await getAllUsers(); 
-        const contributions = await getAllContributions(); 
-        const pending = contributions.filter(c => c.status === 'pending' && c.amount > 0); 
-        const verified = contributions.filter(c => c.status === 'verified' && c.amount > 0);
-        const pendingAmount = pending.reduce((s,c) => s + c.amount, 0);
-        return { 
-            totalMembers: users.length, 
-            pendingCount: pending.length, 
-            totalCollected: verified.reduce((s,c) => s + c.amount, 0).toFixed(2),
-            pendingAmount: pendingAmount.toFixed(2)
-        }; 
-    }
-    
-    async getPendingContributions() { 
-        const contributions = await getAllContributions(); 
-        const users = await getAllUsers(); 
-        const userMap = Object.fromEntries(users.map(u => [u.id, { name: u.name }])); 
-        console.log('All contributions:', contributions);
-        const pending = contributions.filter(c => c.status === 'pending' && c.amount > 0);
-        console.log('Filtered pending:', pending);
-        return pending.map(c => ({ 
-            id: c.id, 
-            userName: userMap[c.userId]?.name || 'Unknown', 
-            amount: c.amount, 
-            round: c.round, 
-            date: c.date,
-            transactionRef: c.transactionRef
-        })); 
-    }
-    
-    async verify(id) { 
-        const user = getCurrentUser(); 
-        if (user.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        await verifyContribution(id, user.id); 
-        showToast('Verified!', 'success'); 
-        this.renderAdminPanel(); 
-        if (typeof loadDashboardData === 'function') loadDashboardData(); 
-    }
-    
-    // New method to view proof and verify in one flow
-    async viewProofAndVerify(contributionId) {
-        try {
-            const contribution = await getContributionById(contributionId);
-            if (!contribution) {
-                showToast('Contribution not found', 'error');
-                return;
-            }
-            
-            // Create a modal to show proof and verify
-            const modal = document.getElementById('proofModal');
-            const proofImage = document.getElementById('proofImage');
-            const proofDetails = document.getElementById('proofDetails');
-            
-            if (contribution.screenshotURL) {
-                proofImage.innerHTML = `<img src="${contribution.screenshotURL}" alt="Payment Proof" style="max-width:100%;max-height:300px;border-radius:8px">`;
-            } else {
-                proofImage.innerHTML = '<p>No proof available</p>';
-            }
-            
-            proofDetails.innerHTML = `
-                <p><strong>Amount:</strong> $${contribution.amount}</p>
-                <p><strong>Date:</strong> ${new Date(contribution.date).toLocaleString()}</p>
-                <p><strong>Transaction Ref:</strong> ${contribution.transactionRef || 'N/A'}</p>
-                <p><strong>Status:</strong> ${contribution.status}</p>
-                <button class="btn-primary" onclick="adminManager.verifyAndCloseModal('${contribution.id}')" style="margin-top: 1rem;">
-                    <i class="fas fa-check-circle"></i> Verify This Contribution
-                </button>
-            `;
-            
-            modal.classList.add('active');
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Error loading proof', 'error');
-        }
-    }
-    
-    async verifyAndCloseModal(contributionId) {
-        await this.verify(contributionId);
-        closeAllModals();
-    }
-    
-    async makeAdmin(userId) { 
-        const currentUser = getCurrentUser();
-        if (currentUser.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        const users = await getAllUsers(); 
-        const user = users.find(u => u.id === userId); 
-        if (user) { 
-            user.role = 'admin'; 
-            user.isActive = true;
-            await updateUser(user); 
-            showToast(`${user.name} is now admin`, 'success'); 
-            this.renderAdminPanel(); 
-        } 
-    }
-    
-    async removeAdmin(userId) {
-        const currentUser = getCurrentUser();
-        if (currentUser.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        const users = await getAllUsers();
-        const admins = users.filter(u => u.role === 'admin');
-        if (admins.length <= 1) { showToast('Cannot remove the last admin', 'error'); return; }
-        const user = users.find(u => u.id === userId);
-        if (user && user.role === 'admin') {
-            user.role = 'member';
-            await updateUser(user);
-            showToast(`${user.name} is no longer admin`, 'success');
-            this.renderAdminPanel();
-        }
-    }
-    
-    async addAdminByEmail() {
-        const emailInput = document.getElementById('newAdminEmail');
-        const email = emailInput?.value.trim();
-        if (!email) { showToast('Enter an email address', 'error'); return; }
-        const users = await getAllUsers();
-        const user = users.find(u => u.email === email);
-        if (!user) { showToast('User not found', 'error'); return; }
-        await this.makeAdmin(user.id);
-        emailInput.value = '';
-    }
-    
-    async deactivateUser(userId) {
-        const currentUser = getCurrentUser();
-        if (currentUser.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        const users = await getAllUsers();
-        const user = users.find(u => u.id === userId);
-        if (user && user.role !== 'admin') {
-            user.isActive = false;
-            await updateUser(user);
-        }
-        showToast('User deactivated', 'success');
-        this.renderAdminPanel();
-    }
-    
-    async activateUser(userId) {
-        const currentUser = getCurrentUser();
-        if (currentUser.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        const users = await getAllUsers();
-        const user = users.find(u => u.id === userId);
-        if (user) {
-            user.isActive = true;
-            await updateUser(user);
-        }
-        showToast('User activated', 'success');
-        this.renderAdminPanel();
-    }
-    
-    async exportFullData() {
-        const currentUser = getCurrentUser();
-        if (currentUser.role !== 'admin') { showToast('Admin access required', 'error'); return; }
-        
-        const users = await getAllUsers();
-        const contributions = await getAllContributions();
-        const rounds = await getAllRounds();
-        const withdrawals = getStorageData('equibhub_withdrawals') || [];
-        
-        const data = { 
-            users, 
-            contributions, 
-            rounds, 
-            withdrawals, 
-            exportedAt: new Date().toISOString(), 
-            exportedBy: currentUser.name,
-            systemInfo: {
-                version: CONFIG.VERSION,
-                maxMembers: CONFIG.MAX_MEMBERS,
-                totalRounds: CONFIG.TOTAL_ROUNDS
-            }
-        };
-        
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `equibhub_full_export_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Full data exported!', 'success');
-    }
-    
-    async exportMembersCSV() {
-        const members = await getMemberSummary();
-        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status,Is Active\n';
-        members.forEach(m => { 
-            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status},${m.isActive !== false ? 'Yes' : 'No'}\n`; 
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `equibhub_members_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Members exported!', 'success');
-    }
-    
-    async exportContributionsCSV() {
-        const contributions = await getAllContributions();
-        const users = await getAllUsers();
-        const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
-        let csv = 'Date,Member,Amount,Round,Status,Transaction Ref\n';
-        contributions.forEach(c => { 
-            if (c.amount > 0) csv += `${new Date(c.date).toISOString()},${userMap[c.userId] || 'Unknown'},${c.amount},${c.round},${c.status},${c.transactionRef || ''}\n`; 
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `equibhub_contributions_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Contributions exported!', 'success');
-    }
-    
-    async backupData() {
-        showToast('Creating backup...', 'info');
-        if (typeof syncAllToCloud === 'function') {
-            await syncAllToCloud();
-            showToast('Backup completed! Data synced to cloud.', 'success');
-        } else {
-            showToast('Backup function not available', 'error');
-        }
-    }
-    
-    // Helper method to show default admin credentials
-    showDefaultAdminCredentials() {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('👑 DEFAULT ADMIN CREDENTIALS');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📧 Email: admin@equibhub.com');
-        console.log('🔑 Password: Admin123!');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        return { email: 'admin@equibhub.com', password: 'Admin123!' };
-    }
-}
-
-// Create global admin manager instance
-const adminManager = new AdminManager();
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => { 
-    console.log('DOM ready, initializing AdminManager...');
-    await adminManager.init(); 
-    
-    const users = await getAllUsers();
-    if (!users || users.length === 0) {
-        adminManager.showDefaultAdminCredentials();
-    }
-    
-    // Extra safety: check if current user should be admin but isn't
-    const currentUser = getCurrentUser();
-    if (currentUser && users.length > 0 && users[0]?.id === currentUser.id && currentUser.role !== 'admin') {
-        console.log('Fixing: First user should be admin but is not. Applying fix...');
-        users[0].role = 'admin';
-        users[0].isActive = true;
-        setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-        setCurrentUser(users[0]);
-        console.log('✅ Fixed: First user is now admin. Please refresh.');
+// Also add keyboard shortcut: Ctrl+Shift+A to open admin panel
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        console.log('🔑 Admin shortcut triggered');
+        adminManager.renderAdminPanel();
     }
 });
-
-// Make adminManager available globally
-window.adminManager = adminManager;
-
-// Also add a global helper to force show admin panel (for debugging)
-window.forceShowAdmin = async function() {
-    console.log('Force showing admin panel...');
-    await adminManager.forceShowAdminPanel();
-};

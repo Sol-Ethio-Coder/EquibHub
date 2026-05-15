@@ -1818,6 +1818,49 @@ canvas {
     display: block;
 }
 
+/* Admin tab styles */
+.admin-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.admin-tab:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+    color: var(--accent-primary);
+}
+
+.admin-tab.active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.admin-tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.admin-tab-content.active {
+    display: block;
+}
+
+.info-box {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--accent-primary);
+    padding: 1rem;
+    border-radius: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
 /* Pending List */
 .pending-list {
     display: flex;
