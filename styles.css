@@ -2570,3 +2570,39 @@ canvas {
         grid-template-columns: 1fr;
     }
 }
+
+/* Session Timer Styling */
+.session-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.session-timer.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.session-timer.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+#timerCount {
+    font-weight: 600;
+    font-family: monospace;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}

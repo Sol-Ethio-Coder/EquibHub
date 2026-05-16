@@ -1324,3 +1324,43 @@ window.handleLogout = handleLogout;
 window.viewProof = viewProof;
 window.manualSync = manualSync;
 window.switchView = switchView;
+
+// Add to script.js - Session heartbeat to prevent unexpected logout
+
+let heartbeatInterval = null;
+
+function startSessionHeartbeat() {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    
+    heartbeatInterval = setInterval(() => {
+        if (isAuthenticated()) {
+            // Send heartbeat to keep session alive
+            const user = getCurrentUser();
+            if (user && typeof resetSessionTimer === 'function') {
+                resetSessionTimer();
+                console.log('💓 Session heartbeat sent');
+            }
+        }
+    }, 5 * 60 * 1000); // Every 5 minutes
+}
+
+function stopSessionHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
+
+// Call this after login
+function onUserLoggedIn() {
+    startSessionHeartbeat();
+}
+
+// Call this after logout
+function onUserLoggedOut() {
+    stopSessionHeartbeat();
+}
+
+// Modify your existing checkAuthState or login success handler
+// Add this line where user successfully logs in:
+// onUserLoggedIn();
