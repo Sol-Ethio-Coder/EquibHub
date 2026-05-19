@@ -150,23 +150,36 @@ async function createUser(email, password, name) {
     const users = await getAllUsers();
     if (users.find(u => u.email === email)) throw new Error('Email already exists');
     if (users.length >= CONFIG.MAX_MEMBERS) throw new Error(`Maximum ${CONFIG.MAX_MEMBERS} members reached`);
+    
     if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
         throw new Error(`Password must be at least ${CONFIG.MIN_PASSWORD_LENGTH} characters`);
     }
+    
     const hashedPassword = await hashPassword(password);
     const newUser = {
         id: Date.now().toString(),
-        email, password: `hashed:${hashedPassword}`, name,
-        balance: 0, totalContributed: 0,
+        email,
+        password: `hashed:${hashedPassword}`,
+        name,
+        balance: 0,
+        totalContributed: 0,
         createdAt: new Date().toISOString(),
         role: users.length === 0 ? 'admin' : 'member',
-        bankDetails: { accountName: '', bankName: '', accountNumber: '', routingNumber: '', mobileMoneyId: '' },
         isActive: true,
-        lastActive: new Date().toISOString()
+        bankDetails: {
+            accountName: '',
+            bankName: '',
+            accountNumber: '',
+            routingNumber: '',
+            mobileMoneyId: ''
+        }
     };
+    
     users.push(newUser);
     setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
+    
     if (users.length === 1) await initRounds();
+    
     const { password: _, ...safeUser } = newUser;
     return safeUser;
 }

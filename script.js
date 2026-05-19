@@ -1,15 +1,13 @@
-// Main application logic - WITH PAYMENT HISTORY
+// Main application logic - ETHIOPIAN BIRR (ETB) VERSION - NO INVITE CODE
 
 let currentChart = null;
 let selectedScreenshotFile = null;
 let appInitialized = false;
 
-// Payment History Variables
 let allPayments = [];
 let currentPaymentPage = 1;
 const paymentsPerPage = 10;
 
-// Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, initializing app...');
     showLoading(true);
@@ -49,7 +47,6 @@ function showLoading(show) {
 }
 
 function setupEventListeners() {
-    // Auth toggles
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
@@ -58,7 +55,6 @@ function setupEventListeners() {
         });
     });
     
-    // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.view;
@@ -69,7 +65,6 @@ function setupEventListeners() {
         });
     });
     
-    // Mobile menu
     const menuToggle = document.getElementById('menuToggle');
     if (menuToggle) {
         menuToggle.addEventListener('click', () => {
@@ -77,7 +72,6 @@ function setupEventListeners() {
         });
     }
     
-    // Theme toggles
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
@@ -88,7 +82,6 @@ function setupEventListeners() {
         mobileThemeToggle.addEventListener('click', toggleTheme);
     }
     
-    // Quick actions
     const quickContribute = document.getElementById('quickContribute');
     if (quickContribute) {
         quickContribute.addEventListener('click', () => openModal('contribute'));
@@ -99,7 +92,6 @@ function setupEventListeners() {
         quickWithdraw.addEventListener('click', () => openModal('withdraw'));
     }
     
-    // FAB buttons
     const fabContribute = document.getElementById('fabContribute');
     if (fabContribute) {
         fabContribute.addEventListener('click', () => {
@@ -118,12 +110,10 @@ function setupEventListeners() {
         });
     }
     
-    // Modal close
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => closeAllModals());
     });
     
-    // Upload area
     const uploadArea = document.getElementById('uploadArea');
     const uploadButton = document.getElementById('uploadButton');
     const fileInput = document.getElementById('paymentScreenshot');
@@ -141,7 +131,6 @@ function setupEventListeners() {
         fileInput.addEventListener('change', handleFileSelect);
     }
     
-    // Drag and drop
     if (uploadArea) {
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -163,7 +152,6 @@ function setupEventListeners() {
         });
     }
     
-    // Confirm actions
     const confirmContribute = document.getElementById('confirmContribute');
     if (confirmContribute) {
         confirmContribute.addEventListener('click', handleContribute);
@@ -204,7 +192,6 @@ function setupEventListeners() {
         exportContributionsBtn.addEventListener('click', handleExportContributions);
     }
     
-    // Logout buttons
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
@@ -215,7 +202,6 @@ function setupEventListeners() {
         logoutMobileBtn.addEventListener('click', handleLogout);
     }
     
-    // Sync button
     const syncBtn = document.querySelector('.sync-btn');
     if (syncBtn) {
         syncBtn.addEventListener('click', async function() {
@@ -234,7 +220,6 @@ function setupEventListeners() {
         });
     }
     
-    // Dismiss reminder
     const dismissReminder = document.getElementById('dismissReminder');
     if (dismissReminder) {
         dismissReminder.addEventListener('click', () => {
@@ -243,7 +228,20 @@ function setupEventListeners() {
         });
     }
     
-    // Click outside modal to close
+    const filterRound = document.getElementById('filterRound');
+    const filterStatus = document.getElementById('filterStatus');
+    const searchTransaction = document.getElementById('searchTransaction');
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+    const exportPaymentsBtn = document.getElementById('exportPaymentHistoryBtn');
+    
+    if (filterRound) filterRound.addEventListener('change', () => { currentPaymentPage = 1; applyPaymentFilters(); });
+    if (filterStatus) filterStatus.addEventListener('change', () => { currentPaymentPage = 1; applyPaymentFilters(); });
+    if (searchTransaction) searchTransaction.addEventListener('input', () => { currentPaymentPage = 1; applyPaymentFilters(); });
+    if (prevPage) prevPage.addEventListener('click', () => { if (currentPaymentPage > 1) { currentPaymentPage--; applyPaymentFilters(); } });
+    if (nextPage) nextPage.addEventListener('click', () => { currentPaymentPage++; applyPaymentFilters(); });
+    if (exportPaymentsBtn) exportPaymentsBtn.addEventListener('click', exportPaymentHistory);
+    
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeAllModals();
@@ -432,12 +430,11 @@ async function loadDashboardData() {
         const user = getCurrentUser();
         if (!user) return;
         
-        // Update user info
         const userNameSpan = document.getElementById('userName');
         if (userNameSpan) userNameSpan.innerText = user.name.split(' ')[0];
         
         const userBalanceSpan = document.getElementById('userBalance');
-        if (userBalanceSpan) userBalanceSpan.innerText = `$${user.balance.toFixed(2)}`;
+        if (userBalanceSpan) userBalanceSpan.innerText = `${user.balance.toFixed(2)} Br`;
         
         const contributions = await getUserContributions(user.id);
         const totalContributions = contributions.filter(c => c.amount > 0).length;
@@ -461,7 +458,6 @@ async function loadDashboardData() {
         const activeMembersSpan = document.getElementById('activeMembers');
         if (activeMembersSpan) activeMembersSpan.innerText = `${activeCount}/${CONFIG.MAX_MEMBERS}`;
         
-        // Update progress tracker
         const progressPercent = (currentRound.roundNumber / CONFIG.TOTAL_ROUNDS) * 100;
         const roundProgressFill = document.getElementById('roundProgressFill');
         if (roundProgressFill) roundProgressFill.style.width = `${progressPercent}%`;
@@ -469,7 +465,6 @@ async function loadDashboardData() {
         const progressStatsSpan = document.getElementById('progressStats');
         if (progressStatsSpan) progressStatsSpan.innerText = `Round ${currentRound.roundNumber} of ${CONFIG.TOTAL_ROUNDS}`;
         
-        // Update milestones
         const milestonesContainer = document.getElementById('milestonesContainer');
         if (milestonesContainer) {
             milestonesContainer.innerHTML = '';
@@ -496,279 +491,6 @@ async function loadDashboardData() {
     }
 }
 
-// ============================================
-// PAYMENT HISTORY FUNCTIONS
-// ============================================
-
-async function loadPaymentHistory() {
-    try {
-        const user = getCurrentUser();
-        if (!user) return;
-        
-        // Get all contributions and withdrawals
-        const contributions = await getUserContributions(user.id);
-        const withdrawals = getStorageData('equibhub_withdrawals') || [];
-        const userWithdrawals = withdrawals.filter(w => w.userId === user.id);
-        
-        // Combine and format payments
-        allPayments = [];
-        
-        // Add contributions
-        contributions.forEach(c => {
-            if (c.amount > 0) {
-                allPayments.push({
-                    id: c.id,
-                    date: c.date,
-                    round: c.round,
-                    type: 'contribution',
-                    amount: c.amount,
-                    status: c.status,
-                    transactionRef: c.transactionRef || '',
-                    screenshotURL: c.screenshotURL
-                });
-            }
-        });
-        
-        // Add withdrawals
-        userWithdrawals.forEach(w => {
-            allPayments.push({
-                id: w.id,
-                date: w.date,
-                round: 'Withdrawal',
-                type: 'withdrawal',
-                amount: w.amount,
-                status: w.status || 'processed',
-                transactionRef: '',
-                screenshotURL: null
-            });
-        });
-        
-        // Sort by date (newest first)
-        allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        // Update summary cards
-        updatePaymentSummary(allPayments);
-        
-        // Setup payment history event listeners
-        setupPaymentHistoryListeners();
-        
-        // Apply filters and render
-        applyPaymentFilters();
-        
-    } catch (error) {
-        console.error('Error loading payment history:', error);
-        const tbody = document.getElementById('paymentHistoryBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Error loading payment history</td></tr>';
-    }
-}
-
-function updatePaymentSummary(payments) {
-    const totalPaid = payments.filter(p => p.type === 'contribution' && p.status === 'verified')
-        .reduce((sum, p) => sum + p.amount, 0);
-    
-    const totalWithdrawn = payments.filter(p => p.type === 'withdrawal')
-        .reduce((sum, p) => sum + p.amount, 0);
-    
-    const netBalance = totalPaid - totalWithdrawn;
-    
-    const verifiedCount = payments.filter(p => p.type === 'contribution' && p.status === 'verified').length;
-    const totalContributions = payments.filter(p => p.type === 'contribution').length;
-    const successRate = totalContributions > 0 ? (verifiedCount / totalContributions) * 100 : 0;
-    
-    const totalPaidEl = document.getElementById('totalPaidAmount');
-    const totalWithdrawnEl = document.getElementById('totalWithdrawnAmount');
-    const netBalanceEl = document.getElementById('netBalanceAmount');
-    const successRateEl = document.getElementById('successRate');
-    
-    if (totalPaidEl) totalPaidEl.innerText = `$${totalPaid.toFixed(2)}`;
-    if (totalWithdrawnEl) totalWithdrawnEl.innerText = `$${totalWithdrawn.toFixed(2)}`;
-    if (netBalanceEl) netBalanceEl.innerText = `$${netBalance.toFixed(2)}`;
-    if (successRateEl) successRateEl.innerText = `${successRate.toFixed(0)}%`;
-}
-
-function applyPaymentFilters() {
-    const filterRound = document.getElementById('filterRound')?.value || 'all';
-    const filterStatus = document.getElementById('filterStatus')?.value || 'all';
-    const searchTerm = document.getElementById('searchTransaction')?.value.toLowerCase() || '';
-    
-    let filtered = [...allPayments];
-    
-    // Filter by round
-    if (filterRound !== 'all') {
-        filtered = filtered.filter(p => p.round == filterRound);
-    }
-    
-    // Filter by status
-    if (filterStatus !== 'all') {
-        filtered = filtered.filter(p => p.status === filterStatus);
-    }
-    
-    // Search by transaction ref
-    if (searchTerm) {
-        filtered = filtered.filter(p => 
-            p.transactionRef?.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    // Reset to first page when filters change
-    currentPaymentPage = 1;
-    
-    // Render current page
-    renderPaymentTable(filtered);
-    updatePagination(filtered.length);
-}
-
-function renderPaymentTable(payments) {
-    const tbody = document.getElementById('paymentHistoryBody');
-    if (!tbody) return;
-    
-    const startIndex = (currentPaymentPage - 1) * paymentsPerPage;
-    const endIndex = startIndex + paymentsPerPage;
-    const pagePayments = payments.slice(startIndex, endIndex);
-    
-    if (pagePayments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">No payment records found</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = pagePayments.map(p => `
-        <tr>
-            <td>${new Date(p.date).toLocaleDateString()}<br><small>${new Date(p.date).toLocaleTimeString()}</small></td>
-            <td>${p.round}</td>
-            <td>
-                <span class="payment-type ${p.type}">
-                    <i class="fas ${p.type === 'contribution' ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-                    ${p.type === 'contribution' ? 'Contribution' : 'Withdrawal'}
-                </span>
-            </td>
-            <td style="color: ${p.type === 'contribution' ? 'var(--success)' : 'var(--warning)'}; font-weight:600;">
-                ${p.type === 'contribution' ? '+' : '-'}$${p.amount.toFixed(2)}
-            </td>
-            <td>
-                <span class="payment-status ${p.status}">
-                    <i class="fas ${p.status === 'verified' ? 'fa-check-circle' : p.status === 'pending' ? 'fa-clock' : 'fa-times-circle'}"></i>
-                    ${p.status === 'verified' ? 'Verified' : p.status === 'pending' ? 'Pending' : p.status === 'processed' ? 'Processed' : 'Rejected'}
-                </span>
-            </td>
-            <td>${p.transactionRef || '-'}</td>
-            <td>
-                ${p.screenshotURL ? 
-                    `<a class="payment-proof-link" onclick="viewProof('${p.id}')">📷 View Proof</a>` : 
-                    p.type === 'withdrawal' ? '✓ Processed' : '-'}
-            </td>
-        </tr>
-    `).join('');
-}
-
-function updatePagination(totalItems) {
-    const totalPages = Math.ceil(totalItems / paymentsPerPage);
-    const pageInfo = document.getElementById('pageInfo');
-    const prevBtn = document.getElementById('prevPage');
-    const nextBtn = document.getElementById('nextPage');
-    
-    if (pageInfo) pageInfo.innerText = `Page ${currentPaymentPage} of ${totalPages || 1}`;
-    if (prevBtn) prevBtn.disabled = currentPaymentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPaymentPage === totalPages || totalPages === 0;
-}
-
-function setupPaymentHistoryListeners() {
-    const filterRound = document.getElementById('filterRound');
-    const filterStatus = document.getElementById('filterStatus');
-    const searchTransaction = document.getElementById('searchTransaction');
-    const prevPage = document.getElementById('prevPage');
-    const nextPage = document.getElementById('nextPage');
-    const exportBtn = document.getElementById('exportPaymentHistoryBtn');
-    
-    if (filterRound) {
-        filterRound.removeEventListener('change', applyPaymentFilters);
-        filterRound.addEventListener('change', () => {
-            currentPaymentPage = 1;
-            applyPaymentFilters();
-        });
-    }
-    
-    if (filterStatus) {
-        filterStatus.removeEventListener('change', applyPaymentFilters);
-        filterStatus.addEventListener('change', () => {
-            currentPaymentPage = 1;
-            applyPaymentFilters();
-        });
-    }
-    
-    if (searchTransaction) {
-        searchTransaction.removeEventListener('input', applyPaymentFilters);
-        searchTransaction.addEventListener('input', () => {
-            currentPaymentPage = 1;
-            applyPaymentFilters();
-        });
-    }
-    
-    if (prevPage) {
-        prevPage.removeEventListener('click', handlePrevPage);
-        prevPage.addEventListener('click', handlePrevPage);
-    }
-    
-    if (nextPage) {
-        nextPage.removeEventListener('click', handleNextPage);
-        nextPage.addEventListener('click', handleNextPage);
-    }
-    
-    if (exportBtn) {
-        exportBtn.removeEventListener('click', exportPaymentHistory);
-        exportBtn.addEventListener('click', exportPaymentHistory);
-    }
-}
-
-function handlePrevPage() {
-    if (currentPaymentPage > 1) {
-        currentPaymentPage--;
-        applyPaymentFilters();
-    }
-}
-
-function handleNextPage() {
-    currentPaymentPage++;
-    applyPaymentFilters();
-}
-
-function exportPaymentHistory() {
-    const filterRound = document.getElementById('filterRound')?.value || 'all';
-    const filterStatus = document.getElementById('filterStatus')?.value || 'all';
-    const searchTerm = document.getElementById('searchTransaction')?.value.toLowerCase() || '';
-    
-    let filtered = [...allPayments];
-    
-    if (filterRound !== 'all') {
-        filtered = filtered.filter(p => p.round == filterRound);
-    }
-    if (filterStatus !== 'all') {
-        filtered = filtered.filter(p => p.status === filterStatus);
-    }
-    if (searchTerm) {
-        filtered = filtered.filter(p => p.transactionRef?.toLowerCase().includes(searchTerm));
-    }
-    
-    // Create CSV
-    let csv = 'Date,Round,Type,Amount,Status,Transaction Reference\n';
-    filtered.forEach(p => {
-        csv += `"${new Date(p.date).toLocaleString()}","${p.round}","${p.type}","${p.type === 'contribution' ? '+' : '-'}$${p.amount}","${p.status}","${p.transactionRef || ''}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `payment_history_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    showToast('Payment history exported!', 'success');
-}
-
-// ============================================
-// END PAYMENT HISTORY FUNCTIONS
-// ============================================
-
 async function loadRecentTransactions() {
     try {
         const user = getCurrentUser();
@@ -789,7 +511,7 @@ async function loadRecentTransactions() {
                     <i class="fas ${tx.amount > 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
                     <span>${tx.amount > 0 ? 'Contributed' : 'Withdrew'}</span>
                 </div>
-                <div>$${Math.abs(tx.amount).toFixed(2)}</div>
+                <div>${Math.abs(tx.amount).toFixed(2)} Br</div>
                 <div>${new Date(tx.date).toLocaleDateString()}</div>
                 ${tx.status === 'pending' ? '<span class="status-badge pending">Pending</span>' : ''}
             </div>
@@ -811,7 +533,7 @@ async function loadMembersView() {
                 <div class="member-info">
                     <div class="member-name">${member.name}</div>
                     <div class="member-stats">
-                        <span>💰 $${member.totalPaid}</span>
+                        <span>💰 ${member.totalPaid.toFixed(2)} Br</span>
                         <span>📦 ${member.roundsPaid}/${CONFIG.TOTAL_ROUNDS} rounds</span>
                         ${member.pendingContributions > 0 ? `<span>⏳ ${member.pendingContributions} pending</span>` : ''}
                     </div>
@@ -838,7 +560,7 @@ async function loadContributionsView() {
         container.innerHTML = sorted.map(cont => `
             <tr>
                 <td>${userMap[cont.userId] || 'Unknown'}</td>
-                <td>$${cont.amount.toFixed(2)}</td>
+                <td>${cont.amount.toFixed(2)} Br</td>
                 <td>${new Date(cont.date).toLocaleDateString()}</td>
                 <td>Round ${cont.round}</td>
                 <td>
@@ -876,7 +598,7 @@ window.viewProof = async function(contributionId) {
         }
         
         proofDetails.innerHTML = `
-            <p><strong>Amount:</strong> $${contribution.amount}</p>
+            <p><strong>Amount:</strong> ${contribution.amount.toFixed(2)} Br</p>
             <p><strong>Date:</strong> ${new Date(contribution.date).toLocaleString()}</p>
             <p><strong>Transaction Ref:</strong> ${contribution.transactionRef || 'N/A'}</p>
             <p><strong>Status:</strong> ${contribution.status}</p>
@@ -906,7 +628,7 @@ async function loadRoundsView() {
         container.innerHTML = rounds.map(round => `
             <div class="round-item">
                 <div class="round-number">Round ${round.roundNumber}</div>
-                <div>Total: $${(roundTotals[round.roundNumber] || 0).toFixed(2)}</div>
+                <div>Total: ${(roundTotals[round.roundNumber] || 0).toFixed(2)} Br</div>
                 <div class="round-status ${round.status}">${round.status.toUpperCase()}</div>
             </div>
         `).join('');
@@ -928,7 +650,7 @@ async function loadAnalyticsView() {
                 data: {
                     labels: chartData.labels,
                     datasets: [{
-                        label: 'Verified Contributions ($)',
+                        label: 'Verified Contributions (Br)',
                         data: chartData.data,
                         backgroundColor: 'rgba(59, 130, 246, 0.6)',
                         borderRadius: 10
@@ -966,19 +688,19 @@ async function loadAnalyticsView() {
                     <div class="stat-card">
                         <div class="stat-info">
                             <span class="stat-label">Total Verified Pool</span>
-                            <span class="stat-value">$${totalCollected.toFixed(2)}</span>
+                            <span class="stat-value">${totalCollected.toFixed(2)} Br</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-info">
                             <span class="stat-label">Pending Verification</span>
-                            <span class="stat-value">$${pendingAmount.toFixed(2)}</span>
+                            <span class="stat-value">${pendingAmount.toFixed(2)} Br</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-info">
                             <span class="stat-label">Average per Member</span>
-                            <span class="stat-value">$${avgPerMember.toFixed(2)}</span>
+                            <span class="stat-value">${avgPerMember.toFixed(2)} Br</span>
                         </div>
                     </div>
                 </div>
@@ -1115,7 +837,7 @@ async function handleExportContributions() {
         const userMap = {};
         users.forEach(u => userMap[u.id] = u.name);
         
-        let csv = 'Date,Member,Amount,Round,Status,Transaction Reference\n';
+        let csv = 'Date,Member,Amount (Br),Round,Status,Transaction Reference\n';
         contributions.forEach(c => {
             if (c.amount > 0) {
                 csv += `${new Date(c.date).toISOString()},${userMap[c.userId] || 'Unknown'},${c.amount},${c.round},${c.status},${c.transactionRef || ''}\n`;
@@ -1138,30 +860,207 @@ async function handleExportContributions() {
     }
 }
 
-// ============================================
-// MAIN SWITCH VIEW FUNCTION - UPDATED
-// ============================================
+async function loadPaymentHistory() {
+    try {
+        const user = getCurrentUser();
+        if (!user) return;
+        
+        const contributions = await getUserContributions(user.id);
+        const withdrawals = getStorageData('equibhub_withdrawals') || [];
+        const userWithdrawals = withdrawals.filter(w => w.userId === user.id);
+        
+        allPayments = [];
+        
+        contributions.forEach(c => {
+            if (c.amount > 0) {
+                allPayments.push({
+                    id: c.id,
+                    date: c.date,
+                    round: c.round,
+                    type: 'contribution',
+                    amount: c.amount,
+                    status: c.status,
+                    transactionRef: c.transactionRef || '',
+                    screenshotURL: c.screenshotURL
+                });
+            }
+        });
+        
+        userWithdrawals.forEach(w => {
+            allPayments.push({
+                id: w.id,
+                date: w.date,
+                round: 'Withdrawal',
+                type: 'withdrawal',
+                amount: w.amount,
+                status: w.status || 'processed',
+                transactionRef: '',
+                screenshotURL: null
+            });
+        });
+        
+        allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        updatePaymentSummary(allPayments);
+        applyPaymentFilters();
+        
+    } catch (error) {
+        console.error('Error loading payment history:', error);
+        const tbody = document.getElementById('paymentHistoryBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Error loading payment history</td></tr>';
+    }
+}
+
+function updatePaymentSummary(payments) {
+    const totalPaid = payments.filter(p => p.type === 'contribution' && p.status === 'verified')
+        .reduce((sum, p) => sum + p.amount, 0);
+    
+    const totalWithdrawn = payments.filter(p => p.type === 'withdrawal')
+        .reduce((sum, p) => sum + p.amount, 0);
+    
+    const netBalance = totalPaid - totalWithdrawn;
+    
+    const verifiedCount = payments.filter(p => p.type === 'contribution' && p.status === 'verified').length;
+    const totalContributions = payments.filter(p => p.type === 'contribution').length;
+    const successRate = totalContributions > 0 ? (verifiedCount / totalContributions) * 100 : 0;
+    
+    const totalPaidEl = document.getElementById('totalPaidAmount');
+    const totalWithdrawnEl = document.getElementById('totalWithdrawnAmount');
+    const netBalanceEl = document.getElementById('netBalanceAmount');
+    const successRateEl = document.getElementById('successRate');
+    
+    if (totalPaidEl) totalPaidEl.innerText = `${totalPaid.toFixed(2)} Br`;
+    if (totalWithdrawnEl) totalWithdrawnEl.innerText = `${totalWithdrawn.toFixed(2)} Br`;
+    if (netBalanceEl) netBalanceEl.innerText = `${netBalance.toFixed(2)} Br`;
+    if (successRateEl) successRateEl.innerText = `${successRate.toFixed(0)}%`;
+}
+
+function applyPaymentFilters() {
+    const filterRound = document.getElementById('filterRound')?.value || 'all';
+    const filterStatus = document.getElementById('filterStatus')?.value || 'all';
+    const searchTerm = document.getElementById('searchTransaction')?.value.toLowerCase() || '';
+    
+    let filtered = [...allPayments];
+    
+    if (filterRound !== 'all') {
+        filtered = filtered.filter(p => p.round == filterRound);
+    }
+    
+    if (filterStatus !== 'all') {
+        filtered = filtered.filter(p => p.status === filterStatus);
+    }
+    
+    if (searchTerm) {
+        filtered = filtered.filter(p => p.transactionRef?.toLowerCase().includes(searchTerm));
+    }
+    
+    currentPaymentPage = 1;
+    renderPaymentTable(filtered);
+    updatePagination(filtered.length);
+}
+
+function renderPaymentTable(payments) {
+    const tbody = document.getElementById('paymentHistoryBody');
+    if (!tbody) return;
+    
+    const startIndex = (currentPaymentPage - 1) * paymentsPerPage;
+    const endIndex = startIndex + paymentsPerPage;
+    const pagePayments = payments.slice(startIndex, endIndex);
+    
+    if (pagePayments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">No payment records found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = pagePayments.map(p => `
+        <tr>
+            <td>${new Date(p.date).toLocaleDateString()}<br><small>${new Date(p.date).toLocaleTimeString()}</small></td>
+            <td>${p.round}</td>
+            <td>
+                <span class="payment-type ${p.type}">
+                    <i class="fas ${p.type === 'contribution' ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                    ${p.type === 'contribution' ? 'Contribution' : 'Withdrawal'}
+                </span>
+            </td>
+            <td style="color: ${p.type === 'contribution' ? 'var(--success)' : 'var(--warning)'}; font-weight:600;">
+                ${p.type === 'contribution' ? '+' : '-'}${p.amount.toFixed(2)} Br
+            </td>
+            <td>
+                <span class="payment-status ${p.status}">
+                    <i class="fas ${p.status === 'verified' ? 'fa-check-circle' : p.status === 'pending' ? 'fa-clock' : 'fa-times-circle'}"></i>
+                    ${p.status === 'verified' ? 'Verified' : p.status === 'pending' ? 'Pending' : p.status === 'processed' ? 'Processed' : 'Rejected'}
+                </span>
+            </td>
+            <td>${p.transactionRef || '-'}</td>
+            <td>
+                ${p.screenshotURL ? 
+                    `<a class="payment-proof-link" onclick="viewProof('${p.id}')">📷 View Proof</a>` : 
+                    p.type === 'withdrawal' ? '✓ Processed' : '-'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updatePagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / paymentsPerPage);
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    if (pageInfo) pageInfo.innerText = `Page ${currentPaymentPage} of ${totalPages || 1}`;
+    if (prevBtn) prevBtn.disabled = currentPaymentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPaymentPage === totalPages || totalPages === 0;
+}
+
+function exportPaymentHistory() {
+    const filterRound = document.getElementById('filterRound')?.value || 'all';
+    const filterStatus = document.getElementById('filterStatus')?.value || 'all';
+    const searchTerm = document.getElementById('searchTransaction')?.value.toLowerCase() || '';
+    
+    let filtered = [...allPayments];
+    
+    if (filterRound !== 'all') {
+        filtered = filtered.filter(p => p.round == filterRound);
+    }
+    if (filterStatus !== 'all') {
+        filtered = filtered.filter(p => p.status === filterStatus);
+    }
+    if (searchTerm) {
+        filtered = filtered.filter(p => p.transactionRef?.toLowerCase().includes(searchTerm));
+    }
+    
+    let csv = 'Date,Round,Type,Amount (Br),Status,Transaction Reference\n';
+    filtered.forEach(p => {
+        csv += `"${new Date(p.date).toLocaleString()}","${p.round}","${p.type}","${p.type === 'contribution' ? '+' : '-'}${p.amount}","${p.status}","${p.transactionRef || ''}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payment_history_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showToast('Payment history exported!', 'success');
+}
 
 function switchView(view) {
     console.log('Switching to view:', view);
     
-    // Hide all view panels
     document.querySelectorAll('.view-panel').forEach(panel => {
         panel.classList.remove('active');
     });
     
-    // Show selected view
     const targetPanel = document.getElementById(`${view}View`);
     if (targetPanel) {
         targetPanel.classList.add('active');
     } else {
         console.warn('View panel not found:', `${view}View`);
-        // Fallback to overview
         const overviewPanel = document.getElementById('overviewView');
         if (overviewPanel) overviewPanel.classList.add('active');
     }
     
-    // Update nav active state
     document.querySelectorAll('.nav-item').forEach(item => {
         if (item.dataset.view === view) {
             item.classList.add('active');
@@ -1170,7 +1069,6 @@ function switchView(view) {
         }
     });
     
-    // Load view-specific data
     if (view === 'paymentHistory') {
         console.log('Loading payment history...');
         setTimeout(() => {
@@ -1178,10 +1076,6 @@ function switchView(view) {
         }, 100);
     }
 }
-
-// ============================================
-// END OF SWITCH VIEW FUNCTION
-// ============================================
 
 function openModal(type) {
     if (type === 'contribute') {
@@ -1202,7 +1096,7 @@ function openModal(type) {
         const user = getCurrentUser();
         const withdrawBalance = document.getElementById('withdrawBalance');
         const withdrawAmount = document.getElementById('withdrawAmount');
-        if (withdrawBalance) withdrawBalance.innerText = `$${user.balance.toFixed(2)}`;
+        if (withdrawBalance) withdrawBalance.innerText = `${user.balance.toFixed(2)} Br`;
         if (withdrawAmount) withdrawAmount.value = user.balance;
     }
     
@@ -1219,8 +1113,8 @@ async function handleContribute() {
         const amount = parseFloat(document.getElementById('contributeAmount')?.value || 0);
         const transactionRef = document.getElementById('transactionRef')?.value || '';
         
-        if (isNaN(amount) || amount < 10) {
-            showToast('Please enter a valid amount (minimum $10)', 'error');
+        if (isNaN(amount) || amount < 1000) {
+            showToast('Please enter a valid amount (minimum 1,000 Br)', 'error');
             return;
         }
         
@@ -1234,7 +1128,7 @@ async function handleContribute() {
         
         showLoading(true);
         await addContribution(user.id, amount, currentRound.roundNumber, selectedScreenshotFile, transactionRef);
-        showToast(`Contribution of $${amount} submitted! Awaiting verification.`, 'success');
+        showToast(`Contribution of ${amount.toFixed(2)} Br submitted! Awaiting verification.`, 'success');
         closeAllModals();
         await loadDashboardData();
         showLoading(false);
@@ -1258,8 +1152,8 @@ async function handleWithdraw() {
         const amount = parseFloat(document.getElementById('withdrawAmount')?.value || 0);
         const user = getCurrentUser();
         
-        if (isNaN(amount) || amount < 10) {
-            showToast('Please enter a valid amount', 'error');
+        if (isNaN(amount) || amount < 1000) {
+            showToast('Please enter a valid amount (minimum 1,000 Br)', 'error');
             return;
         }
         
@@ -1277,7 +1171,7 @@ async function handleWithdraw() {
         
         showLoading(true);
         await withdrawFunds(user.id, amount);
-        showToast(`Withdrawal of $${amount} initiated! Funds will be sent to your bank account.`, 'success');
+        showToast(`Withdrawal of ${amount.toFixed(2)} Br initiated! Funds will be sent to your bank account.`, 'success');
         closeAllModals();
         await loadDashboardData();
         showLoading(false);
@@ -1287,7 +1181,6 @@ async function handleWithdraw() {
     }
 }
 
-// FIXED LOGOUT
 async function handleLogout() {
     showLoading(true);
     try {
@@ -1319,48 +1212,7 @@ function showToast(message, type) {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// Make functions global
 window.handleLogout = handleLogout;
 window.viewProof = viewProof;
 window.manualSync = manualSync;
 window.switchView = switchView;
-
-// Add to script.js - Session heartbeat to prevent unexpected logout
-
-let heartbeatInterval = null;
-
-function startSessionHeartbeat() {
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    
-    heartbeatInterval = setInterval(() => {
-        if (isAuthenticated()) {
-            // Send heartbeat to keep session alive
-            const user = getCurrentUser();
-            if (user && typeof resetSessionTimer === 'function') {
-                resetSessionTimer();
-                console.log('💓 Session heartbeat sent');
-            }
-        }
-    }, 5 * 60 * 1000); // Every 5 minutes
-}
-
-function stopSessionHeartbeat() {
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-    }
-}
-
-// Call this after login
-function onUserLoggedIn() {
-    startSessionHeartbeat();
-}
-
-// Call this after logout
-function onUserLoggedOut() {
-    stopSessionHeartbeat();
-}
-
-// Modify your existing checkAuthState or login success handler
-// Add this line where user successfully logs in:
-// onUserLoggedIn();

@@ -73,8 +73,8 @@
                         <button class="nav-item" data-view="rounds"><i class="fas fa-sync-alt"></i><span>Rounds</span></button>
                         <button class="nav-item" data-view="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></button>
                         <button class="nav-item" data-view="bankDetails"><i class="fas fa-university"></i><span>Bank Details</span></button>
-                        <button class="nav-item" data-view="paymentHistory"><i class="fas fa-history"></i><span>Payment History</span></button>
                         <button class="nav-item" data-view="security"><i class="fas fa-shield-alt"></i><span>Security</span></button>
+                        <button class="nav-item" data-view="paymentHistory"><i class="fas fa-history"></i><span>Payment History</span></button>
                     </nav>
                     <div class="sidebar-footer">
                         <div class="session-timer"><i class="fas fa-clock"></i><span>Session: <span id="timerCount">30:00</span></span></div>
@@ -89,7 +89,7 @@
                         <div class="welcome-banner">
                             <div class="welcome-text">
                                 <h2>Welcome, <span id="userName">Member</span>!</h2>
-                                <p>Track your savings journey</p>
+                                <p>Track your savings journey in <strong>Ethiopian Birr (ETB)</strong></p>
                             </div>
                             <div class="round-indicator"><span>Round <span id="currentRound">1</span>/<span id="totalRounds">6</span></span></div>
                         </div>
@@ -105,20 +105,20 @@
                         </div>
 
                         <div class="stats-grid">
-                            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-wallet"></i></div><div class="stat-info"><span class="stat-label">My Balance</span><span class="stat-value" id="userBalance">$0</span></div></div>
+                            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-wallet"></i></div><div class="stat-info"><span class="stat-label">My Balance</span><span class="stat-value" id="userBalance">0 Br</span></div></div>
                             <div class="stat-card success"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-info"><span class="stat-label">My Contributions</span><span class="stat-value" id="userContributions">0</span></div></div>
                             <div class="stat-card info"><div class="stat-icon"><i class="fas fa-trophy"></i></div><div class="stat-info"><span class="stat-label">Next Payout</span><span class="stat-value" id="nextPayout">Round 2</span></div></div>
                             <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><span class="stat-label">Active Members</span><span class="stat-value" id="activeMembers">1/6</span></div></div>
                         </div>
 
                         <div class="action-cards">
-                            <button class="action-card contribute-btn" id="quickContribute"><i class="fas fa-plus-circle"></i><div><h4>Contribute</h4><p>Add with payment proof</p></div></button>
+                            <button class="action-card contribute-btn" id="quickContribute"><i class="fas fa-plus-circle"></i><div><h4>Contribute</h4><p>Add 5,000 Br with payment proof</p></div></button>
                             <button class="action-card withdraw-btn" id="quickWithdraw"><i class="fas fa-money-bill-wave"></i><div><h4>Withdraw</h4><p>Claim your payout</p></div></button>
                         </div>
 
                         <div id="reminderCard" class="reminder-card" style="display: none;">
                             <i class="fas fa-bell"></i>
-                            <div><strong>Contribution Due!</strong><p id="reminderText">Round is active. Please contribute with payment proof.</p></div>
+                            <div><strong>Contribution Due!</strong><p id="reminderText">Round is active. Please contribute 5,000 Br with payment proof.</p></div>
                             <button id="dismissReminder" class="btn-small">Dismiss</button>
                         </div>
 
@@ -132,7 +132,7 @@
                     <div id="contributionsView" class="view-panel">
                         <h2><i class="fas fa-coins"></i> Contribution History with Payment Proofs</h2>
                         <div class="export-bar"><button id="exportContributionsBtn" class="btn-secondary"><i class="fas fa-download"></i> Export to CSV</button></div>
-                        <div class="contributions-table-container"><table class="contributions-table" id="contributionsTable"><thead><tr><th>Member</th><th>Amount</th><th>Date</th><th>Round</th><th>Payment Proof</th><th>Status</th></tr></thead><tbody id="contributionsTableBody"></tbody></table></div>
+                        <div class="contributions-table-container"><table class="contributions-table" id="contributionsTable"><thead><tr><th>Member</th><th>Amount (Br)</th><th>Date</th><th>Round</th><th>Payment Proof</th><th>Status</th></tr></thead><tbody id="contributionsTableBody"></tbody></table></div>
                     </div>
 
                     <div id="roundsView" class="view-panel"><h2><i class="fas fa-sync-alt"></i> EquibHub Rounds</h2><div class="rounds-timeline" id="roundsTimeline"></div></div>
@@ -144,11 +144,11 @@
                         <div class="bank-details-form"><div class="bank-card">
                             <div class="security-note"><i class="fas fa-lock"></i><p>Your bank details are encrypted and only used for withdrawals</p></div>
                             <div class="form-group"><label><i class="fas fa-user"></i> Account Holder Name</label><input type="text" id="bankAccountName" placeholder="Full name as per bank account"></div>
-                            <div class="form-group"><label><i class="fas fa-building"></i> Bank Name</label><input type="text" id="bankName" placeholder="e.g., CBE, Birhan Bank"></div>
+                            <div class="form-group"><label><i class="fas fa-building"></i> Bank Name</label><input type="text" id="bankName" placeholder="e.g., Commercial Bank of Ethiopia, Dashen Bank"></div>
                             <div class="form-group"><label><i class="fas fa-credit-card"></i> Account Number</label><input type="text" id="bankAccountNumber" placeholder="Your bank account number"></div>
                             <div class="form-group"><label><i class="fas fa-code-branch"></i> Routing Number</label><input type="text" id="bankRoutingNumber" placeholder="Routing number"></div>
-                            <div class="form-group"><label><i class="fas fa-mobile-alt"></i> Mobile Money / UPI ID (Optional)</label><input type="text" id="mobileMoneyId" placeholder="e.g., 1234567890@paytm / 0712345678"></div>
-                            <button class="btn-primary" id="saveBankDetails">Save Bank Details</button>
+                            <div class="form-group"><label><i class="fas fa-mobile-alt"></i> Mobile Money / Telebirr ID (Optional)</label><input type="text" id="mobileMoneyId" placeholder="e.g., 0912345678 / Telebirr ID"></div>
+                            <button class="btn-primary" id="saveBankDetails">Save Details</button>
                             <div id="bankStatus"></div>
                         </div></div>
                     </div>
@@ -166,11 +166,11 @@
                             <div class="security-section"><h3>Data Export</h3><button class="btn-secondary" id="exportAllDataBtn"><i class="fas fa-database"></i> Export All My Data</button></div>
                         </div>
                     </div>
-                                        <!-- Payment History View -->
+
+                    <!-- Payment History View -->
                     <div id="paymentHistoryView" class="view-panel">
                         <h2><i class="fas fa-history"></i> My Payment History</h2>
                         
-                        <!-- Filters -->
                         <div class="payment-filters">
                             <div class="filter-group">
                                 <label><i class="fas fa-filter"></i> Filter by:</label>
@@ -202,27 +202,26 @@
                             </div>
                         </div>
                         
-                        <!-- Payment Summary Cards -->
                         <div class="payment-summary-grid">
                             <div class="summary-card total-paid">
                                 <div class="summary-icon"><i class="fas fa-money-bill-wave"></i></div>
                                 <div class="summary-info">
                                     <span class="summary-label">Total Paid</span>
-                                    <span class="summary-value" id="totalPaidAmount">$0</span>
+                                    <span class="summary-value" id="totalPaidAmount">0 Br</span>
                                 </div>
                             </div>
                             <div class="summary-card total-withdrawn">
                                 <div class="summary-icon"><i class="fas fa-arrow-down"></i></div>
                                 <div class="summary-info">
                                     <span class="summary-label">Total Withdrawn</span>
-                                    <span class="summary-value" id="totalWithdrawnAmount">$0</span>
+                                    <span class="summary-value" id="totalWithdrawnAmount">0 Br</span>
                                 </div>
                             </div>
                             <div class="summary-card net-balance">
                                 <div class="summary-icon"><i class="fas fa-wallet"></i></div>
                                 <div class="summary-info">
                                     <span class="summary-label">Net Balance</span>
-                                    <span class="summary-value" id="netBalanceAmount">$0</span>
+                                    <span class="summary-value" id="netBalanceAmount">0 Br</span>
                                 </div>
                             </div>
                             <div class="summary-card success-rate">
@@ -234,19 +233,10 @@
                             </div>
                         </div>
                         
-                        <!-- Payment History Table -->
                         <div class="payment-table-container">
                             <table class="payment-history-table">
                                 <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Round</th>
-                                        <th>Type</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Transaction Ref</th>
-                                        <th>Proof</th>
-                                    </tr>
+                                    <tr><th>Date</th><th>Round</th><th>Type</th><th>Amount (Br)</th><th>Status</th><th>Transaction Ref</th><th>Proof</th></tr>
                                 </thead>
                                 <tbody id="paymentHistoryBody">
                                     <tr><td colspan="7" style="text-align:center">Loading payment history...</td></tr>
@@ -254,7 +244,6 @@
                             </table>
                         </div>
                         
-                        <!-- Pagination -->
                         <div class="pagination" id="paymentPagination">
                             <button id="prevPage" class="page-btn" disabled>← Previous</button>
                             <span id="pageInfo" class="page-info">Page 1 of 1</span>
@@ -268,21 +257,21 @@
 
     <!-- Modals -->
     <div id="contributeModal" class="modal"><div class="modal-content modal-large"><div class="modal-header"><h3>Make Contribution</h3><button class="close-modal">&times;</button></div><div class="modal-body">
-        <div class="info-box"><i class="fas fa-info-circle"></i><p>Default contribution amount: <strong>$50</strong> per round</p></div>
-        <div class="input-group"><label>Amount ($)</label><input type="number" id="contributeAmount" value="50" step="10" min="10"></div>
+        <div class="info-box"><i class="fas fa-info-circle"></i><p>Default contribution amount: <strong>5,000 Br (Ethiopian Birr)</strong> per round</p></div>
+        <div class="input-group"><label>Amount (Br)</label><input type="number" id="contributeAmount" value="5000" step="1000" min="1000"></div>
         <div class="input-group required"><label>Payment Screenshot <span class="required-star">*</span></label>
             <div class="upload-area" id="uploadArea"><i class="fas fa-cloud-upload-alt"></i><p>Click or drag & drop to upload payment proof</p><p class="upload-hint">Supported: JPG, PNG, PDF (Max 5MB)</p><input type="file" id="paymentScreenshot" accept="image/*,application/pdf" style="display:none"><button class="btn-secondary" id="uploadButton">Choose File</button></div>
             <div id="uploadPreview" class="upload-preview"></div>
-            <div class="form-hint">⚠️ Mandatory: Please upload screenshot of your bank transfer or mobile payment</div>
+            <div class="form-hint">⚠️ Mandatory: Please upload screenshot of your bank transfer or Telebirr payment</div>
         </div>
         <div class="input-group"><label>Transaction Reference (Optional)</label><input type="text" id="transactionRef" placeholder="Transaction ID / Reference number"></div>
         <div class="modal-actions"><button class="btn-secondary close-modal">Cancel</button><button class="btn-primary" id="confirmContribute">Confirm Contribution</button></div>
     </div></div></div>
 
     <div id="withdrawModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Withdraw Funds</h3><button class="close-modal">&times;</button></div><div class="modal-body">
-        <div class="info-box warning"><i class="fas fa-exclamation-triangle"></i><p>Funds will be sent to your registered bank account</p></div>
-        <p>Your current balance: <strong id="withdrawBalance">$0</strong></p>
-        <div class="input-group"><label>Amount to Withdraw ($)</label><input type="number" id="withdrawAmount" step="10" min="10"></div>
+        <div class="info-box warning"><i class="fas fa-exclamation-triangle"></i><p>Funds will be sent to your registered bank account or Telebirr</p></div>
+        <p>Your current balance: <strong id="withdrawBalance">0 Br</strong></p>
+        <div class="input-group"><label>Amount to Withdraw (Br)</label><input type="number" id="withdrawAmount" step="1000" min="1000"></div>
         <div class="modal-actions"><button class="btn-secondary close-modal">Cancel</button><button class="btn-primary" id="confirmWithdraw">Confirm Withdrawal</button></div>
     </div></div></div>
 
@@ -299,54 +288,24 @@
         </div>
     </div>
 
-    <!-- Developer Footer with Working Clickable Links -->
+    <!-- Developer Footer -->
     <footer class="developer-footer">
         <div class="footer-container">
-            <div class="footer-divider">
-                <span class="divider-text">✨ Meet the Developer ✨</span>
-            </div>
+            <div class="footer-divider"><span class="divider-text">✨ Meet the Developer ✨</span></div>
             <div class="developer-info">
-                <div class="dev-avatar">
-                    <i class="fas fa-code"></i>
-                </div>
+                <div class="dev-avatar"><i class="fas fa-code"></i></div>
                 <div class="dev-details">
                     <h3 class="dev-name">Sol Ethio Coder</h3>
                     <p class="dev-title"><i class="fas fa-terminal"></i> Full Stack Developer | AI Enthusiast</p>
                 </div>
             </div>
             <div class="social-links">
-                <!-- Portfolio Link -->
-                <a href="https://sol-ethio-coder.netlify.app" target="_blank" rel="noopener noreferrer" class="social-link portfolio">
-                    <i class="fas fa-globe"></i>
-                    <span>Portfolio</span>
-                    <div class="link-tooltip">View my work</div>
-                </a>
-                
-                <!-- GitHub Link -->
-                <a href="https://github.com/Sol-Ethio-Coder" target="_blank" rel="noopener noreferrer" class="social-link github">
-                    <i class="fab fa-github"></i>
-                    <span>GitHub</span>
-                    <div class="link-tooltip">Check my repos</div>
-                </a>
-                
-                <!-- LinkedIn Link -->
-                <a href="https://www.linkedin.com/in/Sol-Ethio-Coder" target="_blank" rel="noopener noreferrer" class="social-link linkedin">
-                    <i class="fab fa-linkedin-in"></i>
-                    <span>LinkedIn</span>
-                    <div class="link-tooltip">Connect with me</div>
-                </a>
-                
-                <!-- Telegram Link -->
-                <a href="https://t.me/Sol_Ethio_Coder" target="_blank" rel="noopener noreferrer" class="social-link telegram">
-                    <i class="fab fa-telegram-plane"></i>
-                    <span>Telegram</span>
-                    <div class="link-tooltip">Message me</div>
-                </a>
+                <a href="https://sol-ethio-coder.netlify.app" target="_blank" class="social-link portfolio"><i class="fas fa-globe"></i><span>Portfolio</span><div class="link-tooltip">View my work</div></a>
+                <a href="https://github.com/Sol-Ethio-Coder" target="_blank" class="social-link github"><i class="fab fa-github"></i><span>GitHub</span><div class="link-tooltip">Check my repos</div></a>
+                <a href="https://www.linkedin.com/in/Sol-Ethio-Coder" target="_blank" class="social-link linkedin"><i class="fab fa-linkedin-in"></i><span>LinkedIn</span><div class="link-tooltip">Connect with me</div></a>
+                <a href="https://t.me/Sol_Ethio_Coder" target="_blank" class="social-link telegram"><i class="fab fa-telegram-plane"></i><span>Telegram</span><div class="link-tooltip">Message me</div></a>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 EquibHub | Built with <i class="fas fa-heart"></i> by Sol Ethio Coder</p>
-                <p class="footer-version">Version 2.0 | Secure Savings Circle</p>
-            </div>
+            <div class="footer-bottom"><p>&copy; 2026 EquibHub | Built with <i class="fas fa-heart"></i> by Sol Ethio Coder</p><p class="footer-version">Version 2.0 | Secure Savings Circle</p></div>
         </div>
     </footer>
 
