@@ -1,4 +1,4 @@
-// admin-setup.js - Complete Admin Panel with User Management (Delete/Deactivate/Activate)
+// admin-setup.js - Complete Admin Panel with ETB Currency
 
 class AdminManager {
     constructor() { 
@@ -11,35 +11,22 @@ class AdminManager {
         
         console.log('🔧 AdminManager initializing...');
         
-        // Create pre-configured admin account on first load
         await this.createPreConfiguredAdmin();
-        
-        // Add admin menu item with multiple attempts
         await this.ensureAdminMenuItem();
         
         this.isInitialized = true; 
     }
     
-    // Ensure admin menu item is added (with retries)
     async ensureAdminMenuItem() {
-        // Try immediately
         await this.tryAddAdminMenuItem();
-        
-        // Try again after 1 second
         setTimeout(() => this.tryAddAdminMenuItem(), 1000);
-        
-        // Try again after 3 seconds
         setTimeout(() => this.tryAddAdminMenuItem(), 3000);
-        
-        // Try again after 5 seconds
         setTimeout(() => this.tryAddAdminMenuItem(), 5000);
     }
     
     async tryAddAdminMenuItem() {
-        // Get current user
         let user = getCurrentUser();
         
-        // If no user, try to get from storage
         if (!user) {
             const sessionData = sessionStorage.getItem(CONFIG.STORAGE_KEYS.SESSION);
             if (sessionData) {
@@ -52,49 +39,37 @@ class AdminManager {
         
         console.log('🔍 Current user check:', user ? { email: user.email, role: user.role } : 'No user');
         
-        // If user exists but is not admin, try to fix
         if (user && user.role !== 'admin') {
             console.log('⚠️ User is not admin, attempting to fix...');
-            
-            // Check if this is the first user
             const users = await getAllUsers();
             if (users.length > 0 && users[0].email === user.email) {
-                // This is the first user, make them admin
                 users[0].role = 'admin';
                 users[0].isActive = true;
                 setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
-                
-                // Update session
                 user.role = 'admin';
                 setCurrentUser(user);
-                
                 console.log('✅ Fixed: First user is now admin');
             }
         }
         
-        // Re-check user after potential fix
         user = getCurrentUser();
         
-        // Only proceed if user is admin
         if (!user || user.role !== 'admin') {
             console.log('❌ User is not admin, skipping admin menu');
             return false;
         }
         
-        // Find sidebar
         const sidebarNav = document.querySelector('.sidebar-nav');
         if (!sidebarNav) {
             console.log('⚠️ Sidebar not found, will retry');
             return false;
         }
         
-        // Check if already added
         if (document.querySelector('.nav-item[data-view="admin"]')) {
             console.log('✅ Admin menu already exists');
             return true;
         }
         
-        // Create admin menu item
         const adminItem = document.createElement('button');
         adminItem.className = 'nav-item';
         adminItem.setAttribute('data-view', 'admin');
@@ -103,13 +78,10 @@ class AdminManager {
         adminItem.style.marginTop = '1rem';
         adminItem.style.paddingTop = '1rem';
         
-        // Add click handler
         adminItem.addEventListener('click', async (e) => {
             e.preventDefault();
             console.log('👑 Admin panel clicked');
             await this.renderAdminPanel();
-            
-            // Also update URL hash for direct access
             window.location.hash = '#admin';
         });
         
@@ -117,7 +89,6 @@ class AdminManager {
         this.adminMenuItemAdded = true;
         console.log('✅ Admin menu item added successfully!');
         
-        // If URL hash is #admin, open admin panel automatically
         if (window.location.hash === '#admin') {
             setTimeout(() => this.renderAdminPanel(), 500);
         }
@@ -125,12 +96,10 @@ class AdminManager {
         return true;
     }
     
-    // Create pre-configured admin account automatically
     async createPreConfiguredAdmin() {
         try {
             const users = await getAllUsers();
             
-            // If no users exist, create default admin
             if (users.length === 0) {
                 console.log('📝 No users found. Creating pre-configured admin account...');
                 
@@ -172,19 +141,15 @@ class AdminManager {
                 
                 await initRounds();
                 return true;
-            } 
-            // If users exist but no admin, make first user admin
-            else {
+            } else {
                 const adminExists = users.some(u => u.role === 'admin');
                 
                 if (!adminExists && users.length > 0) {
-                    console.log('📝 No admin found, promoting first user to admin...');
                     users[0].role = 'admin';
                     users[0].isActive = true;
                     setStorageData(CONFIG.STORAGE_KEYS.USERS, users);
                     console.log(`✅ First user promoted to admin: ${users[0].email}`);
                     
-                    // Update current session if this is the logged-in user
                     const currentUser = getCurrentUser();
                     if (currentUser && currentUser.id === users[0].id) {
                         setCurrentUser(users[0]);
@@ -192,7 +157,6 @@ class AdminManager {
                     }
                 }
                 
-                // Ensure all users have isActive property
                 let needsUpdate = false;
                 for (const user of users) {
                     if (user.isActive === undefined) {
@@ -216,13 +180,11 @@ class AdminManager {
     async renderAdminPanel() {
         console.log('🎨 Rendering admin panel...');
         
-        // Make sure we have the latest data
         const stats = await this.getStats();
         const pending = await this.getPendingContributions();
         const members = await getMemberSummary();
         const currentUser = getCurrentUser();
         
-        // Get or create admin view panel
         let panel = document.getElementById('adminView');
         if (!panel) { 
             panel = document.createElement('div'); 
@@ -231,7 +193,6 @@ class AdminManager {
             document.querySelector('.main-content').appendChild(panel); 
         }
         
-        // Admin panel HTML
         panel.innerHTML = `
             <div class="admin-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -260,7 +221,7 @@ class AdminManager {
                         <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
                         <div class="stat-info">
                             <span class="stat-label">Total Pool</span>
-                            <span class="stat-value">$${stats.totalCollected}</span>
+                            <span class="stat-value">${stats.totalCollected} Br</span>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -291,7 +252,7 @@ class AdminManager {
                                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                         <div>
                                             <strong style="font-size: 1.1rem;">${p.userName}</strong><br>
-                                            <span style="color: var(--success);">💰 Amount: $${p.amount}</span><br>
+                                            <span style="color: var(--success);">💰 Amount: ${p.amount.toFixed(2)} Br</span><br>
                                             <span>🔄 Round: ${p.round}</span><br>
                                             <small>📅 ${new Date(p.date).toLocaleString()}</small><br>
                                             ${p.transactionRef ? `<small>📝 Ref: ${p.transactionRef}</small>` : ''}
@@ -311,7 +272,7 @@ class AdminManager {
                     }
                 </div>
                 
-                <!-- Members Tab with Delete/Deactivate/Activate -->
+                <!-- Members Tab -->
                 <div id="membersTab" class="admin-tab-content">
                     <h3><i class="fas fa-users"></i> Member Management</h3>
                     <div class="members-list">
@@ -321,8 +282,8 @@ class AdminManager {
                                     <div>
                                         <strong>${m.name}</strong> ${!m.isActive ? '<span style="color:#ef4444">(Deactivated)</span>' : ''}<br>
                                         <small>${m.email}</small><br>
-                                        <small>Role: ${m.role || 'member'} | Balance: $${m.balance} | Status: ${m.status}</small>
-                                        <br><small>💰 Total Paid: $${m.totalPaid} | 📦 Rounds: ${m.roundsPaid}/${CONFIG.TOTAL_ROUNDS}</small>
+                                        <small>Role: ${m.role || 'member'} | Balance: ${m.balance.toFixed(2)} Br | Status: ${m.status}</small>
+                                        <br><small>💰 Total Paid: ${m.totalPaid.toFixed(2)} Br | 📦 Rounds: ${m.roundsPaid}/${CONFIG.TOTAL_ROUNDS}</small>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                         ${m.role !== 'admin' ? 
@@ -341,7 +302,6 @@ class AdminManager {
                                                 </button>`) : ''
                                         }
                                         
-                                        <!-- Delete User Button -->
                                         ${m.id !== currentUser?.id ? `
                                             <button class="btn-small" style="background: rgba(239,68,68,0.2); color: #ef4444;" onclick="adminManager.deleteUser('${m.id}')">
                                                 <i class="fas fa-trash-alt"></i> Delete
@@ -398,8 +358,8 @@ class AdminManager {
                         <p><strong>📊 System Statistics:</strong></p>
                         <p>👥 Total Users: ${stats.totalMembers}</p>
                         <p>💰 Total Contributions: ${stats.totalContributions || 0}</p>
-                        <p>💵 Total Collected: $${stats.totalCollected}</p>
-                        <p>⏳ Pending Amount: $${stats.pendingAmount || 0}</p>
+                        <p>💵 Total Collected: ${stats.totalCollected} Br</p>
+                        <p>⏳ Pending Amount: ${stats.pendingAmount || 0} Br</p>
                         <p>👑 Administrators: ${members.filter(m => m.role === 'admin').length}</p>
                     </div>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -424,7 +384,6 @@ class AdminManager {
             </div>
         `;
         
-        // Add tab switching
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
@@ -436,7 +395,6 @@ class AdminManager {
             });
         });
         
-        // Hide all other views and show admin panel
         document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
         panel.classList.add('active');
         
@@ -558,11 +516,9 @@ class AdminManager {
         }
     }
     
-    // DELETE USER - Permanent removal with confirmation
     async deleteUser(userId) {
         const currentUser = getCurrentUser();
         
-        // Check if admin
         if (currentUser.role !== 'admin') { 
             showToast('Admin access required', 'error'); 
             return false;
@@ -576,25 +532,21 @@ class AdminManager {
             return false;
         }
         
-        // Don't allow deleting yourself
         if (currentUser.id === userId) {
             showToast('You cannot delete your own account!', 'error');
             return false;
         }
         
-        // Don't allow deleting the last admin
         const admins = users.filter(u => u.role === 'admin');
         if (userToDelete.role === 'admin' && admins.length <= 1) {
             showToast('Cannot delete the last admin!', 'error');
             return false;
         }
         
-        // Double confirmation for safety
-        const confirmed = confirm(`⚠️ WARNING: You are about to permanently delete "${userToDelete.name}"!\n\nThis will remove:\n- All their contributions\n- Their balance ($${userToDelete.balance})\n- Their bank details\n- All transaction history\n\nThis action CANNOT be undone!\n\nClick OK to continue or Cancel to abort.`);
+        const confirmed = confirm(`⚠️ WARNING: You are about to permanently delete "${userToDelete.name}"!\n\nThis will remove:\n- All their contributions\n- Their balance (${userToDelete.balance.toFixed(2)} Br)\n- Their bank details\n- All transaction history\n\nThis action CANNOT be undone!\n\nClick OK to continue or Cancel to abort.`);
         
         if (!confirmed) return false;
         
-        // Final confirmation with typing
         const finalConfirm = prompt(`Type "DELETE" to permanently delete ${userToDelete.name}:`);
         if (finalConfirm !== 'DELETE') {
             showToast('Deletion cancelled', 'info');
@@ -602,32 +554,25 @@ class AdminManager {
         }
         
         try {
-            // Remove user from users array
             const updatedUsers = users.filter(u => u.id !== userId);
             setStorageData(CONFIG.STORAGE_KEYS.USERS, updatedUsers);
             
-            // Remove user's contributions
             const contributions = await getAllContributions();
             const updatedContributions = contributions.filter(c => c.userId !== userId);
             setStorageData('equibhub_contributions', updatedContributions);
             
-            // Remove user's withdrawals
             const withdrawals = getStorageData('equibhub_withdrawals') || [];
             const updatedWithdrawals = withdrawals.filter(w => w.userId !== userId);
             setStorageData('equibhub_withdrawals', updatedWithdrawals);
             
             showToast(`✅ User "${userToDelete.name}" has been permanently deleted`, 'success');
-            
-            // Refresh admin panel
             await this.refreshAdminPanel();
             
-            // Refresh dashboard data if needed
             if (typeof loadDashboardData === 'function') {
                 await loadDashboardData();
             }
             
             return true;
-            
         } catch (error) {
             console.error('Delete user error:', error);
             showToast('Error deleting user', 'error');
@@ -651,7 +596,8 @@ class AdminManager {
             systemInfo: {
                 version: CONFIG.VERSION,
                 maxMembers: CONFIG.MAX_MEMBERS,
-                totalRounds: CONFIG.TOTAL_ROUNDS
+                totalRounds: CONFIG.TOTAL_ROUNDS,
+                currency: 'ETB (Ethiopian Birr)'
             }
         };
         
@@ -667,9 +613,9 @@ class AdminManager {
     
     async exportMembersCSV() {
         const members = await getMemberSummary();
-        let csv = 'Name,Email,Role,Balance,Total Paid,Rounds Completed,Status,Is Active\n';
+        let csv = 'Name,Email,Role,Balance (Br),Total Paid (Br),Rounds Completed,Status,Is Active\n';
         members.forEach(m => { 
-            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance},${m.totalPaid},${m.roundsPaid},${m.status},${m.isActive !== false ? 'Yes' : 'No'}\n`; 
+            csv += `"${m.name}","${m.email}","${m.role || 'member'}",${m.balance.toFixed(2)},${m.totalPaid.toFixed(2)},${m.roundsPaid},${m.status},${m.isActive !== false ? 'Yes' : 'No'}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -685,9 +631,9 @@ class AdminManager {
         const contributions = await getAllContributions();
         const users = await getAllUsers();
         const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
-        let csv = 'Date,Member,Amount,Round,Status,Transaction Ref\n';
+        let csv = 'Date,Member,Amount (Br),Round,Status,Transaction Ref\n';
         contributions.forEach(c => { 
-            if (c.amount > 0) csv += `${new Date(c.date).toISOString()},${userMap[c.userId] || 'Unknown'},${c.amount},${c.round},${c.status},${c.transactionRef || ''}\n`; 
+            if (c.amount > 0) csv += `${new Date(c.date).toISOString()},${userMap[c.userId] || 'Unknown'},${c.amount.toFixed(2)},${c.round},${c.status},${c.transactionRef || ''}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -709,7 +655,6 @@ class AdminManager {
         }
     }
     
-    // Helper to show default admin credentials
     showDefaultAdminCredentials() {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('👑 DEFAULT ADMIN CREDENTIALS');
@@ -721,10 +666,8 @@ class AdminManager {
     }
 }
 
-// Create global admin manager instance
 const adminManager = new AdminManager();
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => { 
     console.log('🚀 DOM ready, initializing AdminManager...');
     await adminManager.init(); 
@@ -737,10 +680,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ AdminManager initialization complete');
 });
 
-// Make adminManager available globally
 window.adminManager = adminManager;
 
-// Keyboard shortcut: Ctrl+Shift+A to open admin panel
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         e.preventDefault();
